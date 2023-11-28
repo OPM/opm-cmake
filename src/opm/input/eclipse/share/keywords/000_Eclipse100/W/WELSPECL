@@ -5,84 +5,102 @@
   ],
   "items": [
     {
+      "item": 1,
       "name": "WELL",
       "value_type": "STRING"
     },
     {
+      "item": 2,
       "name": "GROUP",
       "value_type": "STRING"
     },
     {
+      "item": 3,
       "name": "LGR",
       "value_type": "STRING"
     },
     {
+      "item": 4,
       "name": "HEAD_I",
       "value_type": "INT"
     },
     {
+      "item": 5,
       "name": "HEAD_J",
       "value_type": "INT"
     },
     {
+      "item": 6,
       "name": "REF_DEPTH",
       "value_type": "DOUBLE",
       "dimension": "Length"
     },
     {
+      "item": 7,
       "name": "PHASE",
       "value_type": "STRING"
     },
     {
+      "item": 8,
       "name": "D_RADIUS",
       "value_type": "DOUBLE",
       "default": 0,
       "dimension": "Length"
     },
     {
+      "item": 9,
       "name": "INFLOW_EQ",
       "value_type": "STRING",
       "default": "STD"
     },
     {
+      "item": 10,
       "name": "AUTO_SHUTIN",
       "value_type": "STRING",
       "default": "SHUT"
     },
     {
+      "item": 11,
       "name": "CROSSFLOW",
       "value_type": "STRING",
       "default": "YES"
     },
     {
+      "item": 12,
       "name": "P_TABLE",
       "value_type": "INT",
       "default": 0
     },
     {
+      "item": 13,
       "name": "DENSITY_CALC",
       "value_type": "STRING",
       "default": "SEG"
     },
     {
+      "item": 14,
       "name": "FIP_REGION",
       "value_type": "INT",
       "default": 0
     },
     {
+      "item": 15,
       "name": "FRONTSIM1",
       "value_type": "STRING"
     },
     {
+      "item": 16,
       "name": "FRONTSIM2",
       "value_type": "STRING"
     },
     {
+      "item": 17,
       "name": "well_model",
       "value_type": "STRING",
       "default": "STD"
     },
     {
+      "item": 18,
       "name": "POLYMER_TABLE",
       "value_type": "INT",
       "default": 0

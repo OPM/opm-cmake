@@ -1,0 +1,98 @@
+{
+  "name": "COMPDATL",
+  "sections": [
+    "SCHEDULE"
+  ],
+  "items": [
+    {
+      "item": 1,
+      "name": "WELL",
+      "value_type": "STRING"
+    },
+    {
+        "item": 2,
+        "name": "LGR",
+        "value_type": "STRING"
+      },
+    {
+      "item": 3,
+      "name": "I",
+      "value_type": "INT",
+      "default": 0
+    },
+    {
+      "item": 4,
+      "name": "J",
+      "value_type": "INT",
+      "default": 0
+    },
+    {
+      "item": 5,
+      "name": "K1",
+      "value_type": "INT"
+    },
+    {
+      "item": 6,
+      "name": "K2",
+      "value_type": "INT"
+    },
+    {
+      "item": 7,
+      "name": "STATE",
+      "value_type": "STRING",
+      "default": "OPEN"
+    },
+    {
+      "item": 8,
+      "name": "SAT_TABLE",
+      "value_type": "INT",
+      "default": 0
+    },
+    {
+      "item": 9,
+      "name": "CONNECTION_TRANSMISSIBILITY_FACTOR",
+      "value_type": "DOUBLE",
+      "dimension": "Viscosity*ReservoirVolume/Time*Pressure"
+    },
+    {
+      "item": 10,
+      "name": "DIAMETER",
+      "value_type": "DOUBLE",
+      "dimension": "Length"
+    },
+    {
+      "item": 11,
+      "name": "Kh",
+      "value_type": "DOUBLE",
+      "dimension": "Permeability*Length",
+      "default": -1
+    },
+    {
+      "item": 12,
+      "name": "SKIN",
+      "value_type": "DOUBLE",
+      "dimension": "1",
+      "default": 0
+    },
+    {
+      "item": 13,
+      "name": "D_FACTOR",
+      "value_type": "DOUBLE",
+      "dimension": "Time/GasSurfaceVolume",
+      "default": 0
+      
+    },
+    {
+      "item": 14,
+      "name": "DIR",
+      "value_type": "STRING",
+      "default": "Z"
+    },
+    {
+      "item": 15,
+      "name": "PR",
+      "value_type": "DOUBLE",
+      "dimension": "Length"
+    }
+  ]
+}

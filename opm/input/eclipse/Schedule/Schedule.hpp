@@ -607,6 +607,7 @@ namespace Opm
         void handleBCProp    (HandlerContext&);
         void handleBRANPROP  (HandlerContext&);
         void handleCOMPDAT   (HandlerContext&);
+        void handleCOMPDATL   (HandlerContext&);
         void handleCOMPLUMP  (HandlerContext&);
         void handleCOMPORD   (HandlerContext&);
         void handleCOMPSEGS  (HandlerContext&);
@@ -662,7 +663,7 @@ namespace Opm
         void handleWELOPEN   (HandlerContext&);
         void handleWELPI     (HandlerContext&);
         void handleWELSEGS   (HandlerContext&);
-        void handleWELSPECS  (HandlerContext&);
+        void handleWELSPEC   (HandlerContext&);
         void handleWELTARG   (HandlerContext&);
         void handleWELTRAJ   (HandlerContext&);
         void handleWFOAM     (HandlerContext&);

@@ -1873,7 +1873,7 @@ File {} line {}.)", wname, location.keyword, location.filename, location.lineno)
         }
     }
 
-    void Schedule::handleWELSPECS(HandlerContext& handlerContext)
+    void Schedule::handleWELSPEC(HandlerContext& handlerContext)
     {
         using Kw = ParserKeywords::WELSPECS;
 
@@ -2945,7 +2945,8 @@ Well{0} entered with 'FIELD' parent group:
             { "WELOPEN" , &Schedule::handleWELOPEN   },
             { "WELPI"   , &Schedule::handleWELPI     },
             { "WELSEGS" , &Schedule::handleWELSEGS   },
-            { "WELSPECS", &Schedule::handleWELSPECS  },
+            { "WELSPECL", &Schedule::handleWELSPEC   },
+            { "WELSPECS", &Schedule::handleWELSPEC   },            
             { "WELTARG" , &Schedule::handleWELTARG   },
             { "WELTRAJ" , &Schedule::handleWELTRAJ   },
             { "WFOAM"   , &Schedule::handleWFOAM     },

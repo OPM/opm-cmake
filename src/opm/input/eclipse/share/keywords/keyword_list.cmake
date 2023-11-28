@@ -88,6 +88,7 @@ set( keywords
      000_Eclipse100/C/COLLAPSE
      000_Eclipse100/C/COLUMNS
      000_Eclipse100/C/COMPDAT
+     000_Eclipse100/C/COMPDATL
      000_Eclipse100/C/COMPDATX
      000_Eclipse100/C/COMPFLSH
      000_Eclipse100/C/COMPIMB
