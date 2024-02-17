@@ -59,7 +59,6 @@
       "item": 9,
       "name": "BHP",
       "value_type": "UDA",
-      "default": 1.01325,
       "dimension": "Pressure"
     },
     {
