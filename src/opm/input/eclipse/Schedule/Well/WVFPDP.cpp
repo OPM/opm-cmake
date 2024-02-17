@@ -33,23 +33,32 @@ namespace Opm {
         WVFPDP result;
         result.m_dp = 1.23;
         result.m_fp = 0.456;
+        result.m_active = false;
 
         return result;
     }
 
     bool WVFPDP::operator==(const WVFPDP& other) const {
         return (m_dp == other.m_dp)
-            && (m_fp == other.m_fp);
+            && (m_fp == other.m_fp)
+            && (m_active == other.m_active);
     }
 
     void WVFPDP::update(const DeckRecord& record) {
         m_dp = record.getItem<ParserKeywords::WVFPDP::DELTA_P>().getSIDouble(0);
         m_fp = record.getItem<ParserKeywords::WVFPDP::LOSS_SCALING_FACTOR>().get<double>(0);
+        this->m_active = true;
     }
 
     void WVFPDP::update(const RestartIO::RstWell& rst_well) {
         this->m_dp = rst_well.vfp_bhp_adjustment;
         this->m_fp = rst_well.vfp_bhp_scaling_factor;
+        // \Note: not totally sure we should do this
+        this->m_active = true;
+    }
+
+    bool WVFPDP::active() const {
+        return this->m_active;
     }
 
     double WVFPDP::getPressureLoss(double bhp_tab, double thp_limit) const {

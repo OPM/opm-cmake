@@ -41,6 +41,8 @@ namespace Opm {
         void update(const DeckRecord& record);
         void update(const RestartIO::RstWell& rst_well);
 
+        bool active() const;
+
         bool operator==(const WVFPDP& other) const;
         bool operator!=(const WVFPDP& other) const;
 
@@ -49,11 +51,13 @@ namespace Opm {
         {
             serializer(m_dp);
             serializer(m_fp);
+            serializer(m_active);
         }
 
     private:
         double m_dp{0.0};
         double m_fp{1.0};
+        bool   m_active{false};
     };
 
 } // namespace Opm
