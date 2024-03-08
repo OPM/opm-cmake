@@ -455,6 +455,14 @@ void check_compsegs_consistency(Opm::WelSegsSet& welsegs,
         throw Opm::OpmInputError(msg, std::get<1>(difference[0]));
     }
 }
+
+void check_welsegs_consistency(const std::vector<::Opm::Well>& wells) {
+    for (const auto& well : wells) {
+        if (well.isMultiSegment()) {
+            well.getSegments().checkSegmentDepthConsistency(well.name());
+        }
+    }
+}
 }// end anonymous namespace
 
 namespace Opm
@@ -608,6 +616,7 @@ void Schedule::iterateScheduleSection(std::size_t load_start, std::size_t load_e
             }
 
             check_compsegs_consistency(welsegs_wells, compsegs_wells, this->getWells(report_step));
+            check_welsegs_consistency(this->getWells(report_step));
             this->applyGlobalWPIMULT(wpimult_global_factor);
             this->end_report(report_step);
 

@@ -112,6 +112,8 @@ namespace Opm {
         const std::vector<Segment>::const_iterator begin() const;
         const std::vector<Segment>::const_iterator end() const;
 
+        void checkSegmentDepthConsistency(const std::string& well_name) const;
+
         template<class Serializer>
         void serializeOp(Serializer& serializer)
         {
