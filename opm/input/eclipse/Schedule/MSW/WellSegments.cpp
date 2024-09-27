@@ -19,6 +19,7 @@
 
 #include <opm/input/eclipse/Schedule/MSW/WellSegments.hpp>
 
+#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/input/eclipse/Schedule/MSW/Segment.hpp>
 #include <opm/input/eclipse/Schedule/MSW/SICD.hpp>
 #include <opm/input/eclipse/Schedule/MSW/Valve.hpp>
@@ -608,6 +609,24 @@ namespace Opm {
         return segment.depth() - outlet_segment.depth();
     }
 
+    void WellSegments::checkSegmentDepthConsistency(const std::string& well_name) const {
+        constexpr double limit = 1. + std::numeric_limits<double>::epsilon();
+        for (const auto& segment : this->m_segments) {
+            const int segment_number = segment.segmentNumber();
+            if (segment_number == 1) {
+                continue; // not totally sure how to handle the top segment yet
+            }
+            const double segment_length = this->segmentLength(segment_number);
+            const double segment_depth_change = this->segmentDepthChange(segment_number);
+            if (std::abs(segment_depth_change) > limit * segment_length) {
+                // TODO: output considering UNIT
+                const std::string msg = fmt::format(" Segment {} of well {} has a depth change of {} meters,"
+                                                    " while it has a length of {} meters, which is unphysical.",
+                                                    segment_number, well_name, segment_depth_change, segment_length);
+                OpmLog::warning(msg);
+            }
+        }
+    }
 
     std::set<int> WellSegments::branches() const {
         std::set<int> bset;
