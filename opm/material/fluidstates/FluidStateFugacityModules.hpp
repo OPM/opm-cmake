@@ -29,6 +29,7 @@
 #define OPM_FLUID_STATE_FUGACITY_MODULES_HPP
 
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -179,20 +180,28 @@ template <class Scalar>
 class FluidStateNullFugacityModule
 {
 public:
-    FluidStateNullFugacityModule()
+    OPM_HOST_DEVICE FluidStateNullFugacityModule()
     { }
 
     /*!
      * \brief The fugacity coefficient of a component in a phase []
      */
-    const Scalar& fugacityCoefficient(unsigned /* phaseIdx */, unsigned /* compIdx */) const
-    { throw std::logic_error("Fugacity coefficients are not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& fugacityCoefficient(unsigned /* phaseIdx */, unsigned /* compIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Fugacity coefficients are not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief The fugacity of a component in a phase [Pa]
      */
-    const Scalar& fugacity(unsigned /* phaseIdx */, unsigned /* compIdx */) const
-    { throw std::logic_error("Fugacities coefficients are not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& fugacity(unsigned /* phaseIdx */, unsigned /* compIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Fugacities coefficients are not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief Make sure that all attributes are defined.
@@ -202,7 +211,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

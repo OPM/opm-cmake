@@ -85,7 +85,7 @@ protected:
     //! Evaluation object are well-defined.
     OPM_HOST_DEVICE void checkDefined_() const
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !OPM_IS_INSIDE_DEVICE_FUNCTION
         for (int i = dstart_(); i < dend_(); ++i)
             Valgrind::CheckDefined(data_[i]);
 #endif

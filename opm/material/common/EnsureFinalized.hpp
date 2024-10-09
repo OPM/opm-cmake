@@ -64,7 +64,8 @@ protected:
 
     OPM_HOST_DEVICE void check() const
     {
-#if USE_OPM_CHECK_PARAM_FINALIZED
+// TODO: find a proper way to handle this on the gpu, the whole purpose is avoided when not throwing
+#if USE_OPM_CHECK_PARAM_FINALIZED && !OPM_IS_INSIDE_DEVICE_FUNCTION
         if (!finalized_)
             throw std::runtime_error("Parameter class has not been finalized before usage!");
 #endif

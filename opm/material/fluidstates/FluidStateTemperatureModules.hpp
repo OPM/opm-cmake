@@ -29,8 +29,8 @@
 #define OPM_FLUID_STATE_TEMPERATURE_MODULES_HPP
 
 #include <opm/material/common/Valgrind.hpp>
-
 #include <opm/material/common/MathToolbox.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -158,21 +158,25 @@ template <class Scalar>
 class FluidStateNullTemperatureModule
 {
 public:
-    FluidStateNullTemperatureModule()
+    OPM_HOST_DEVICE FluidStateNullTemperatureModule()
     { }
 
     /*!
      * \brief The temperature of a fluid phase [-]
      */
-    const Scalar& temperature(unsigned /* phaseIdx */) const
-    { throw std::runtime_error("Temperature is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& temperature(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::runtime_error("Temperature is not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief Retrieve all parameters from an arbitrary fluid
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& /* fs */)
+    OPM_HOST_DEVICE void assign(const FluidState& /* fs */)
     { }
 
     /*!
@@ -183,7 +187,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

@@ -30,6 +30,7 @@
 
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <array>
 
@@ -108,13 +109,13 @@ template <class Scalar,
 class FluidStateNullEnthalpyModule
 {
 public:
-    FluidStateNullEnthalpyModule()
+    OPM_HOST_DEVICE FluidStateNullEnthalpyModule()
     { }
 
     /*!
      * \brief The specific internal energy of a fluid phase [J/kg]
      */
-    const Scalar& internalEnergy(unsigned /* phaseIdx */) const
+    OPM_HOST_DEVICE const Scalar& internalEnergy(unsigned /* phaseIdx */) const
     {
         static Scalar tmp = 0;
         Valgrind::SetUndefined(tmp);
@@ -124,7 +125,7 @@ public:
     /*!
      * \brief The specific enthalpy of a fluid phase [J/kg]
      */
-    const Scalar& enthalpy(unsigned /* phaseIdx */) const
+    OPM_HOST_DEVICE const Scalar& enthalpy(unsigned /* phaseIdx */) const
     {
         static Scalar tmp = 0;
         Valgrind::SetUndefined(tmp);
@@ -136,7 +137,7 @@ public:
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& /* fs */)
+    OPM_HOST_DEVICE void assign(const FluidState& /* fs */)
     { }
 
     /*!
@@ -147,7 +148,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

@@ -90,6 +90,8 @@ public:
     //! are dependent on the phase composition
     static constexpr bool isCompositionDependent = false;
 
+    static constexpr bool isHysteresisDependent = true;
+
     /*!
      * \brief The capillary pressure-saturation curves depending on absolute saturations.
      *

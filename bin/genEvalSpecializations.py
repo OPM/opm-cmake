@@ -3,10 +3,10 @@
 # This script provides "hand loop-unrolled" specializations of the
 # Evaluation class of dense automatic differentiation so that the
 # compiler can more easily emit SIMD instructions. In an ideal world,
-# C++ compilers should be smart enough to do this themselfs, but
+# C++ compilers should be smart enough to do this themselves, but
 # contemporary compilers don't seem to exhibit enough brains.
 #
-# Usage: In the opm-material top-level source directory, run
+# Usage: In the opm-common top-level source directory, run
 # `./bin/genEvalSpecializations.py [MAX_DERIVATIVES]`. The script then
 # generates specializations for Evaluations with up to MAX_DERIVATIVES
 # derivatives. The default for MAX_DERIVATIVES is 12. To run this
@@ -180,7 +180,7 @@ protected:
     //! Evaluation object are well-defined.
     OPM_HOST_DEVICE void checkDefined_() const
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !OPM_IS_INSIDE_DEVICE_FUNCTION
 {% if numDerivs < 0 %}\
         for (int i = dstart_(); i < dend_(); ++i)
             Valgrind::CheckDefined(data_[i]);

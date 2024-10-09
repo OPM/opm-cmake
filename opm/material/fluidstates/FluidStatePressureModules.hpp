@@ -30,6 +30,7 @@
 
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 
@@ -98,14 +99,18 @@ template <class Scalar>
 class FluidStateNullPressureModule
 {
 public:
-    FluidStateNullPressureModule()
+    OPM_HOST_DEVICE FluidStateNullPressureModule()
     { }
 
     /*!
      * \brief The pressure of a fluid phase [Pa]
      */
-    const Scalar& pressure(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Pressure is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& pressure(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Pressure is not provided by this fluid state");
+#endif
+    }
 
 
     /*!
@@ -113,7 +118,7 @@ public:
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& /* fs */)
+    OPM_HOST_DEVICE void assign(const FluidState& /* fs */)
     { }
 
     /*!
@@ -124,7 +129,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

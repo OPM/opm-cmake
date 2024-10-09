@@ -30,6 +30,7 @@
 
 #include <opm/material/common/Valgrind.hpp>
 #include <opm/material/common/MathToolbox.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 #include <array>
@@ -317,19 +318,27 @@ class FluidStateNullCompositionModule
 public:
     enum { numComponents = 0 };
 
-    FluidStateNullCompositionModule() = default;
+    OPM_HOST_DEVICE FluidStateNullCompositionModule() = default;
 
     /*!
      * \brief The mole fraction of a component in a phase []
      */
-    Scalar moleFraction(unsigned /* phaseIdx */, unsigned /* compIdx */) const
-    { throw std::logic_error("Mole fractions are not provided by this fluid state"); }
+    OPM_HOST_DEVICE Scalar moleFraction(unsigned /* phaseIdx */, unsigned /* compIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Mole fractions are not provided by this fluid state"); 
+#endif
+    }
 
     /*!
      * \brief The mass fraction of a component in a phase []
      */
-    Scalar massFraction(unsigned /* phaseIdx */, unsigned /* compIdx */) const
-    { throw std::logic_error("Mass fractions are not provided by this fluid state"); }
+    OPM_HOST_DEVICE Scalar massFraction(unsigned /* phaseIdx */, unsigned /* compIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Mass fractions are not provided by this fluid state"); 
+#endif
+    }
 
     /*!
      * \brief The mean molar mass of a fluid phase [kg/mol]
@@ -339,8 +348,12 @@ public:
      * component's molar masses weighted by the current mole fraction:
      * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
      */
-    Scalar averageMolarMass(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Mean molar masses are not provided by this fluid state"); }
+    OPM_HOST_DEVICE Scalar averageMolarMass(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Mean molar masses are not provided by this fluid state"); 
+#endif
+    }
 
     /*!
      * \brief The concentration of a component in a phase [mol/m^3]
@@ -351,8 +364,12 @@ public:
      *
      * http://en.wikipedia.org/wiki/Concentration
      */
-    Scalar molarity(unsigned /* phaseIdx */, unsigned /* compIdx */) const
-    { throw std::logic_error("Molarities are not provided by this fluid state"); }
+    OPM_HOST_DEVICE Scalar molarity(unsigned /* phaseIdx */, unsigned /* compIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Molarities are not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief Make sure that all attributes are defined.
@@ -362,7 +379,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

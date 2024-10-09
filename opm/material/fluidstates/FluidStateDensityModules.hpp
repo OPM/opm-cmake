@@ -30,6 +30,7 @@
 
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 
@@ -114,33 +115,45 @@ template <class Scalar,
 class FluidStateNullDensityModule
 {
 public:
-    FluidStateNullDensityModule()
+    OPM_HOST_DEVICE FluidStateNullDensityModule()
     { }
 
     /*!
      * \brief The density of a fluid phase [kg/m^3]
      */
-    const Scalar& density(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Density is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& density(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Density is not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief The molar density of a fluid phase [mol/m^3]
      */
-    const Scalar& molarDensity(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Molar density is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& molarDensity(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Molar density is not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief The molar volume of a fluid phase [m^3/mol]
      */
-    const Scalar& molarVolume(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Molar volume is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& molarVolume(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Molar volume is not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief Retrieve all parameters from an arbitrary fluid
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& /* fs */)
+    OPM_HOST_DEVICE void assign(const FluidState& /* fs */)
     { }
 
     /*!
@@ -151,7 +164,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 

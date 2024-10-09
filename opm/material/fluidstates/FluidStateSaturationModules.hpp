@@ -30,6 +30,7 @@
 
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 
@@ -45,19 +46,23 @@ template <class Scalar,
 class FluidStateExplicitSaturationModule
 {
 public:
-    FluidStateExplicitSaturationModule()
-    { Valgrind::SetUndefined(saturation_); }
+    OPM_HOST_DEVICE FluidStateExplicitSaturationModule()
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        Valgrind::SetUndefined(saturation_);
+#endif
+    }
 
     /*!
      * \brief The saturation of a fluid phase [-]
      */
-    const Scalar& saturation(unsigned phaseIdx) const
+    OPM_HOST_DEVICE const Scalar& saturation(unsigned phaseIdx) const
     { return saturation_[phaseIdx]; }
 
     /*!
      * \brief Set the saturation of a phase [-]
      */
-    void setSaturation(unsigned phaseIdx, const Scalar& value)
+    OPM_HOST_DEVICE void setSaturation(unsigned phaseIdx, const Scalar& value)
     { saturation_[phaseIdx] = value; }
 
     /*!
@@ -65,7 +70,7 @@ public:
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& fs)
+    OPM_HOST_DEVICE void assign(const FluidState& fs)
     {
         for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             saturation_[phaseIdx] = decay<Scalar>(fs.saturation(phaseIdx));
@@ -80,9 +85,11 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
         Valgrind::CheckDefined(saturation_);
+#endif
     }
 
 protected:

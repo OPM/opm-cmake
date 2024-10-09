@@ -30,6 +30,7 @@
 
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <algorithm>
 
@@ -98,21 +99,25 @@ template <class Scalar,
 class FluidStateNullViscosityModule
 {
 public:
-    FluidStateNullViscosityModule()
+    OPM_HOST_DEVICE FluidStateNullViscosityModule()
     { }
 
     /*!
      * \brief The viscosity of a fluid phase [-]
      */
-    const Scalar& viscosity(unsigned /* phaseIdx */) const
-    { throw std::logic_error("Viscosity is not provided by this fluid state"); }
+    OPM_HOST_DEVICE const Scalar& viscosity(unsigned /* phaseIdx */) const
+    {
+#if !OPM_IS_INSIDE_DEVICE_FUNCTION
+        throw std::logic_error("Viscosity is not provided by this fluid state");
+#endif
+    }
 
     /*!
      * \brief Retrieve all parameters from an arbitrary fluid
      *        state.
      */
     template <class FluidState>
-    void assign(const FluidState& /* fs */)
+    OPM_HOST_DEVICE void assign(const FluidState& /* fs */)
     { }
 
     /*!
@@ -123,7 +128,7 @@ public:
      * message if some attributes of the object have not been properly
      * defined.
      */
-    void checkDefined() const
+    OPM_HOST_DEVICE void checkDefined() const
     { }
 };
 
