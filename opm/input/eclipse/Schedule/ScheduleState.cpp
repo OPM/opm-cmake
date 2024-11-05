@@ -311,6 +311,7 @@ bool ScheduleState::operator==(const ScheduleState& other) const {
         && this->bhp_defaults.get() == other.bhp_defaults.get()
         && this->source.get() == other.source.get()
         && this->wells == other.wells
+        && this->inj_streams == other.inj_streams
         && this->groups == other.groups
         && this->vfpprod == other.vfpprod
         && this->vfpinj == other.vfpinj
