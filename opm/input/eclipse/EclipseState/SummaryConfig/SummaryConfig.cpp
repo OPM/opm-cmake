@@ -394,7 +394,7 @@ struct SummaryConfigContext {
     bool is_well_comp(const std::string& keyword)
     {
         static const auto well_comp_kw = keyword_set {
-             "WXMF", "WYMF", "WZMF", "WCGMR", "WCOMR"
+             "WAMF", "WXMF", "WYMF", "WZMF", "WCGMR", "WCOMR"
         };
 
         return is_in_set(well_comp_kw, keyword);
