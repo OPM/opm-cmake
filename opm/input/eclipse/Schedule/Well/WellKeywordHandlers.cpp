@@ -546,29 +546,29 @@ void handleWELOPEN(HandlerContext& handlerContext)
     }
 }
 
-void handleWINJGAS(HandlerContext& HandlerContext)
+void handleWINJGAS(HandlerContext& handlerContext)
 {
-    for (const auto& record : HandlerContext.keyword) {
+    for (const auto& record : handlerContext.keyword) {
         const std::string& wellNamePattern = record.getItem("WELL").getTrimmedString(0);
-        const auto well_names = HandlerContext.wellNames(wellNamePattern, false);
+        const auto well_names = handlerContext.wellNames(wellNamePattern, false);
         const std::string& fluid_nature = record.getItem("FLUID").getTrimmedString(0);
         // TODO: technically, only the firt two characters are significant
         // TODO: we need to test it out whether only the first two characters matter
         if (fluid_nature != "STREAM") {
             std::string msg = fmt::format("The fluid nature '{}' is not supported in WINJGAS keyword.", fluid_nature);
-            throw OpmInputError(msg, HandlerContext.keyword.location());
+            throw OpmInputError(msg, handlerContext.keyword.location());
         }
         const std::string& stream_name = record.getItem("STREAM").getTrimmedString(0);
         // TODO: we do not handle other records for now
 
         // we make sure the stream is defined in WELLSTRE keyword
-        const auto& inj_streams = HandlerContext.state().inj_streams;
+        const auto& inj_streams = handlerContext.state().inj_streams;
         if (!inj_streams.has(stream_name)) {
             std::string msg = fmt::format("The stream '{}' is not defined in WELLSTRE keyword.", stream_name);
-            throw OpmInputError(msg, HandlerContext.keyword.location());
+            throw OpmInputError(msg, handlerContext.keyword.location());
         }
 
-        auto well2 = HandlerContext.state().wells.get(well_names[0]);
+        auto well2 = handlerContext.state().wells.get(well_names[0]);
         // if (well2.isProducer()) {
         //     std::string msg = fmt::format("The well '{}' is a producer, not an injector.", well_names[0]);
         //     throw OpmInputError(msg, HandlerContext.keyword.location());
@@ -578,6 +578,10 @@ void handleWINJGAS(HandlerContext& HandlerContext)
         // TODO: should we make it a injection event?
         const auto& inj_stream = inj_streams.get(stream_name);
         injection->setGasInjComposition(inj_stream);
+
+        if (well2.updateInjection(injection)) {
+            handlerContext.state().wells.update( std::move(well2) );
+        }
     }
 }
 

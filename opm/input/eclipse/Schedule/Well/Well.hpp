@@ -234,6 +234,7 @@ public:
         void handleWTMULT(Well::WELTARGCMode cmode, double factor);
 
         void setGasInjComposition(const std::vector<double>& composition);
+        const std::vector<double>& gasInjComposition() const;
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)
@@ -575,7 +576,6 @@ public:
     double inj_temperature() const;
     bool hasInjTemperature() const;
     void setWellInjTemperature(const double temp);
-    void setGasInjComposition(const std::vector<double>& composition);
     bool hasInjected( ) const;
     bool hasProduced( ) const;
     bool updateHasInjected( );

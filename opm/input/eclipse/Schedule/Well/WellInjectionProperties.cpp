@@ -509,5 +509,11 @@ namespace Opm {
         gas_inj_composition = composition;
     }
 
+    const std::vector<double>& Well::WellInjectionProperties::gasInjComposition() const {
+        if (!gas_inj_composition.has_value()) {
+            throw std::invalid_argument("Gas injection composition not set");
+        }
+        return gas_inj_composition.value();
+    }
 
 }
