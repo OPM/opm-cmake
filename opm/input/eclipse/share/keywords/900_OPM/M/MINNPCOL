@@ -8,7 +8,7 @@
     {
       "name": "VALUE",
       "value_type": "INT",
-      "default": 6
+      "default": 3
     }
   ]
 }
