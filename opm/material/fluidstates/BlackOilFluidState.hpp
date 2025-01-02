@@ -150,7 +150,7 @@ public:
             Valgrind::CheckDefined(density_[storagePhaseIdx]);
             Valgrind::CheckDefined(invB_[storagePhaseIdx]);
 
-            if constexpr (enableEnergy)
+            if constexpr (enableTemperature || enableEnergy)
                 Valgrind::CheckDefined((*enthalpy_)[storagePhaseIdx]);
         }
 
@@ -215,7 +215,7 @@ public:
             setPressure(phaseIdx, fs.pressure(phaseIdx));
             setDensity(phaseIdx, fs.density(phaseIdx));
 
-            if constexpr (enableEnergy)
+            if constexpr (enableEnergy || enableTemperature)
                 setEnthalpy(phaseIdx, fs.enthalpy(phaseIdx));
 
             setInvB(phaseIdx, getInvB_<FluidSystem, FluidState, Scalar>(fs, phaseIdx, pvtRegionIdx));
@@ -681,7 +681,7 @@ private:
     }
 
     ConditionalStorage<enableTemperature || enableEnergy, Scalar> temperature_{};
-    ConditionalStorage<enableEnergy, std::array<Scalar, numStoragePhases> > enthalpy_{};
+    ConditionalStorage<enableTemperature || enableEnergy, std::array<Scalar, numStoragePhases> > enthalpy_{};
     Scalar totalSaturation_{};
     std::array<Scalar, numStoragePhases> pressure_{};
     std::array<Scalar, numStoragePhases> pc_{};

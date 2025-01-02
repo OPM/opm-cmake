@@ -33,7 +33,6 @@
 #endif
 
 #include <fmt/format.h>
-
 namespace Opm {
 
 #if HAVE_ECL_INPUT

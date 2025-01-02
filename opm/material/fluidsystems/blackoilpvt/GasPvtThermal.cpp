@@ -46,7 +46,6 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
     //////
     isothermalPvt_ = new IsothermalPvt;
     isothermalPvt_->initFromState(eclState, schedule);
-
     //////
     // initialize the thermal part
     //////
