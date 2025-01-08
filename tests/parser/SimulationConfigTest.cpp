@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(SimulationConfig_TEMP_THERMAL)
         const auto fp = FieldPropsManager(deck, Phases{true, true, true}, eg, tm);
         const auto simulationConfig = Opm::SimulationConfig(false, deck, fp);
 
-        BOOST_CHECK(simulationConfig.isThermal());
+        BOOST_CHECK(simulationConfig.isTemp());
     }
 
     {
