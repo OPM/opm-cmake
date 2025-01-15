@@ -58,7 +58,6 @@ namespace Opm {
         bool hasVAPWAT() const;
         bool isThermal() const;
         bool isTemp() const;
-        bool useEnthalpy() const;
         bool isDiffusive() const;
         bool hasPRECSALT() const;
 
@@ -81,7 +80,6 @@ namespace Opm {
             serializer(m_VAPWAT);
             serializer(m_isTemp);
             serializer(m_isThermal);
-            serializer(m_useEnthalpy);
             serializer(m_diffuse);
             serializer(m_PRECSALT);
         }
@@ -101,7 +99,6 @@ namespace Opm {
         bool m_VAPWAT{false};
         bool m_isTemp{false};
         bool m_isThermal{false};
-        bool m_useEnthalpy{false};
         bool m_diffuse{false};
         bool m_PRECSALT{false};
     };

@@ -43,11 +43,6 @@ template <class Scalar, class IndexTraits>
 void BlackOilFluidSystem<Scalar,IndexTraits>::
 initFromState(const EclipseState& eclState, const Schedule& schedule)
 {
-    if (eclState.getSimulationConfig().useEnthalpy()) {
-        enthalpy_eq_energy_ = false;
-    } else {
-        enthalpy_eq_energy_ = true;
-    }
     std::size_t num_regions = eclState.runspec().tabdims().getNumPVTTables();
     initBegin(num_regions);
 
