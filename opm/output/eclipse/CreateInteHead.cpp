@@ -275,7 +275,7 @@ namespace {
 
         const int nigrpz = 97 + std::max(nwgmax, ngmax);
         const int nsgrpz = 112;
-        const int nxgrpz = 180 + 4*num_water_tracer;
+        const int nxgrpz = 181 + 4*num_water_tracer;
         const int nzgrpz = 5;
 
         return {{
@@ -377,10 +377,10 @@ namespace {
             std::max(numMSW, wsd.maxSegmentedWells()),
             std::max(maxNumSeg, wsd.maxSegmentsPerWell()),
             std::max(maxNumBr, wsd.maxLateralBranchesPerWell()),
-            22,           // Number of entries per segment in ISEG (2017.2)
+            22,           // #ISEG elems per segment
             Opm::RestartIO::InteHEAD::numRsegElem(rspec.phases())
-               + 8*num_water_tracer, // Number of entries per segment in RSEG
-            10            // Number of entries per segment in ILBR (2017.2)
+               + 8*num_water_tracer, // #RSEG elems per segment
+            10            // #ILBR elems per branch
         };
     }
 
@@ -584,12 +584,15 @@ createInteHead(const EclipseState& es,
                                               report_step, lookup_step))
         .calendarDate       (getSimulationTimePoint(sched.posixStartTime(), simTime))
         .activePhases       (getActivePhases(rspec))
-             // The numbers below have been determined experimentally to work
-             // across a range of reference cases, but are not guaranteed to be
-             // universally valid.
-        .drsdt(sched, lookup_step)
-        .params_NWELZ       (155 + num_water_tracer, 122 + 2*num_water_tracer, 130 + nxwelz_tracer_shift, 3) // n{isxz}welz: number of data elements per well in {ISXZ}WELL
-        .params_NCON        (25, 41, 58 + 5*num_water_tracer)       // n{isx}conz: number of data elements per completion in ICON
+        .drsdt              (sched, lookup_step)
+             // -----------------------------------------------------------------------------------
+             //              NIWELZ                | NSWELZ                  | NXWELZ                   | NZWELZ
+             //              #IWEL elems per well  | #SWEL elems per well    | #XWEL elems per well     | #ZWEL elems per well
+        .params_NWELZ       (155 + num_water_tracer, 122 + 2*num_water_tracer, 131 + nxwelz_tracer_shift, 3)
+             // -----------------------------------------------------------------------------------
+             //              NICONZ               | NSCONZ               | NXCONZ
+             //              #ICON elems per conn | #SCON elems per conn | #XCON elems per conn
+        .params_NCON        (26,                    42,                    58 + 5*num_water_tracer)
         .params_GRPZ        (getNGRPZ(nwgmax, ngmax, num_water_tracer, rspec))
         .aquiferDimensions  (inferAquiferDimensions(es, sched[lookup_step]))
         .stepParam          (num_solver_steps, report_step)
@@ -599,16 +602,16 @@ createInteHead(const EclipseState& es,
         .regionDimensions   (getRegDims(tdim, rdim))
         .ngroups            ({ ngmax })
         .params_NGCTRL      (GroupControl(sched, report_step, lookup_step))
-        .variousParam       (201802, 100)  // Output should be compatible with Eclipse 100, 2017.02 version.
+        .variousParam       (202204, 100)
         .udqParam_1         (getUdqParam(rspec, sched, report_step, lookup_step))
         .actionParam        (getActionParam(rspec, acts, report_step))
         .variousUDQ_ACTIONXParam()
         .nominatedPhaseGuideRate(setGuideRateNominatedPhase(sched, report_step, lookup_step))
         .whistControlMode   (getWhistctlMode(sched, report_step, lookup_step))
-        .activeNetwork  (getActiveNetwork(sched, lookup_step))
+        .activeNetwork      (getActiveNetwork(sched, lookup_step))
         .networkDimensions  (getNetworkDims(sched, lookup_step, rspec))
-        .netBalanceData  (getNetworkBalanceParameters(sched, report_step))
-        .rockOpts(getRockOpts(rckcfg,rdim))
+        .netBalanceData     (getNetworkBalanceParameters(sched, report_step))
+        .rockOpts           (getRockOpts(rckcfg, rdim))
         ;
 
     return ih.data();

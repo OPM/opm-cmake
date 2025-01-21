@@ -87,6 +87,18 @@ double pressEquivRadius(const float denom,
     return rw * std::exp(denom - skin);
 }
 
+double pressEquivRadius(const Opm::UnitSystem& usys,
+                        const std::size_t      nsconz,
+                        const float*           scon,
+                        const float            denom,
+                        const float            skin,
+                        const float            rw)
+{
+    return (nsconz > VI::SConn::PressEquivRad)
+        ? usys.to_si(Opm::UnitSystem::measure::length, scon[VI::SConn::PressEquivRad])
+        : pressEquivRadius(denom, skin, rw);
+}
+
 } // Anonymous namespace
 
 double Opm::RestartIO::RstConnection::inverse_peaceman(double cf, double kh, double rw, double skin)
@@ -137,7 +149,7 @@ Opm::RestartIO::RstConnection::RstConnection(const UnitSystem& unit_system,
     , resv_rate  { unit_system.to_si(M::rate, xcon[VI::XConn::ResVRate]) }
       // -----------------------------------------------------------------
       // Derived quantities
-    , r0 { pressEquivRadius(this->denom, this->skin_factor, this->diameter / 2) }
+    , r0 { pressEquivRadius(unit_system, nsconz, scon, this->denom, this->skin_factor, this->diameter / 2) }
 {
     if (static_cast<std::size_t>(nsconz) > VI::SConn::CFInDeck) {
         this->cf_kind = from_float(scon[VI::SConn::CFInDeck]);

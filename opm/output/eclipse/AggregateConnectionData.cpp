@@ -146,6 +146,8 @@ namespace {
             iConn[Ix::ConnDir] = static_cast<int>(conn.dir());
             iConn[Ix::Segment] = conn.attachedToSegment()
                 ? conn.segment() : 0;
+
+            iConn[Ix::ConnIdx] = iConn[Ix::SeqIndex];
         }
     } // IConn
 
@@ -219,6 +221,8 @@ namespace {
                 staticDFacCorrCoeff(conn.ctfProperties(), units);
 
             sConn[Ix::CFInDeck] = conn.ctfAssignedFromInput() ? 1.0f : 0.0f;
+
+            sConn[Ix::PressEquivRad] = scprop(M::length, conn.r0());
         }
 
         template <class SConnArray>

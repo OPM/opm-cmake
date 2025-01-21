@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems {
+namespace Opm::RestartIO::Helpers::VectorItems {
     namespace IConn {
         enum index : std::vector<int>::size_type {
             SeqIndex   =  0, // Connection sequence index
@@ -39,6 +39,8 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
             ConnDir    = 13, // Penetration direction (1:X, 2:Y, 3:Z)
             Segment    = 14, // Segment ID of connection
                              //   0 for regular connections, > 0 for MSW.
+
+            ConnIdx    = 25, // Connection index (1-based)
         };
     } // IConn
 
@@ -67,7 +69,10 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
             StaticDFacCorrCoeff = 37, // Static component of Forchheimer
                                       // D-factor correlation.
 
-            CFInDeck     = 40, // = 0 for connection factor not defined, = 1 for connection factor defined
+            CFInDeck     = 40,  // = 0 for connection factor not defined in input,
+                                // = 1 for connection factor defined in input.
+
+            PressEquivRad = 41, // Connection's pressure equivalent radius.
         };
     } // SConn
 
@@ -100,6 +105,6 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
             TracerOffset = 58,  // Tracer data starts after this index
         };
     } // XConn
-}}}} // Opm::RestartIO::Helpers::VectorItems
+} // Opm::RestartIO::Helpers::VectorItems
 
 #endif // OPM_OUTPUT_ECLIPSE_VECTOR_CONNECTION_HPP
