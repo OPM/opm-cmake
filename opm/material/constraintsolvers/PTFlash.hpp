@@ -992,7 +992,7 @@ protected:
         // p_l and p_v are the same here, in the future, there might be slightly more complicated scenarios when capillary
         // pressure joins
 
-        constexpr size_t num_deri = numComponents;
+        constexpr size_t num_deri = InputEval::numVars; // numComponents;
         for (unsigned compIdx = 0; compIdx < numComponents; ++compIdx) {
             std::vector<double> deri(num_deri, 0.);
             // derivatives from P
