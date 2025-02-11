@@ -33,9 +33,10 @@
 #include <opm/common/utility/gpuDecorators.hpp>
 
 // TODO: move this variable to config.h
-#define OPM_CHECK_PARAM_FINALIZED 1
+//#define OPM_CHECK_PARAM_FINALIZED 0
+#define USE_OPM_CHECK_PARAM_FINALIZED 0
 
-#if ! defined(NDEBUG) && OPM_CHECK_PARAM_FINALIZED
+#ifndef NDEBUG
 #define USE_OPM_CHECK_PARAM_FINALIZED 1
 #endif
 
