@@ -28,10 +28,13 @@
 #ifndef OPM_CONDITIONAL_STORAGE_HH
 #define OPM_CONDITIONAL_STORAGE_HH
 
+#include "opm/common/ErrorMacros.hpp"
+#include <cassert>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 
+#include <opm/common/utility/gpuDecorators.hpp>
 namespace Opm {
 /*!
  * \ingroup Common
@@ -49,50 +52,50 @@ public:
     typedef T type;
     static constexpr bool condition = cond;
 
-    ConditionalStorage()
+    OPM_HOST_DEVICE ConditionalStorage()
     {}
 
-    explicit ConditionalStorage(const T& v)
+    OPM_HOST_DEVICE explicit ConditionalStorage(const T& v)
         : data_(v)
     {}
 
-    explicit ConditionalStorage(T&& v)
+    OPM_HOST_DEVICE explicit ConditionalStorage(T&& v)
         : data_(std::move(v))
     {}
 
     template <class ...Args>
-    ConditionalStorage(Args... args)
+    OPM_HOST_DEVICE ConditionalStorage(Args... args)
         : data_(args...)
     {}
 
-    ConditionalStorage(const ConditionalStorage& t)
+    OPM_HOST_DEVICE ConditionalStorage(const ConditionalStorage& t)
         : data_(t.data_)
     {};
 
-    ConditionalStorage(ConditionalStorage&& t)
+    OPM_HOST_DEVICE ConditionalStorage(ConditionalStorage&& t)
         : data_(std::move(t.data_))
     {};
 
-    ConditionalStorage& operator=(const ConditionalStorage& v)
+    OPM_HOST_DEVICE ConditionalStorage& operator=(const ConditionalStorage& v)
     {
         data_ = v.data_;
         return *this;
     }
 
-    ConditionalStorage& operator=(ConditionalStorage&& v)
+    OPM_HOST_DEVICE ConditionalStorage& operator=(ConditionalStorage&& v)
     {
         data_ = std::move(v.data_);
         return *this;
     }
 
-    const T& operator*() const
+    OPM_HOST_DEVICE const T& operator*() const
     { return data_; }
-    T& operator*()
+    OPM_HOST_DEVICE T& operator*()
     { return data_; }
 
-    const T* operator->() const
+    OPM_HOST_DEVICE const T* operator->() const
     { return &data_; }
-    T* operator->()
+    OPM_HOST_DEVICE T* operator->()
     { return &data_; }
 
 private:
@@ -106,42 +109,51 @@ public:
     typedef T type;
     static constexpr bool condition = false;
 
-    ConditionalStorage()
+    OPM_HOST_DEVICE ConditionalStorage()
     {
         static_assert(std::is_default_constructible_v<T>);
     }
 
-    explicit ConditionalStorage(const T&)
+    OPM_HOST_DEVICE explicit ConditionalStorage(const T&)
     {
         static_assert(std::is_copy_constructible_v<T>);
     }
 
-    ConditionalStorage(const ConditionalStorage &)
+    OPM_HOST_DEVICE ConditionalStorage(const ConditionalStorage &)
     {
         // copying an empty conditional storage object does not do anything.
     };
 
     template <class ...Args>
-    ConditionalStorage(Args...)
+    OPM_HOST_DEVICE ConditionalStorage(Args...)
     {
         static_assert(std::is_constructible_v<T, Args...>);
     }
 
-    ConditionalStorage& operator=(const ConditionalStorage&)
+    OPM_HOST_DEVICE ConditionalStorage& operator=(const ConditionalStorage&)
     {
         static_assert(std::is_copy_assignable_v<T>);
         return *this;
     }
 
-    const T& operator*() const
-    { throw std::logic_error("data member deactivated"); }
-    T& operator*()
-    { throw std::logic_error("data member deactivated"); }
+    OPM_HOST_DEVICE const T& operator*() const
+    { 
+        OPM_THROW(std::logic_error, "data member deactivated"); 
+    }
+    OPM_HOST_DEVICE T& operator*()
+    { 
+        OPM_THROW(std::logic_error, "data member deactivated"); 
+    }
 
-    const T* operator->() const
-    { throw std::logic_error("data member deactivated"); }
-    T* operator->()
-    { throw std::logic_error("data member deactivated"); }
+    OPM_HOST_DEVICE const T* operator->() const
+    { 
+        OPM_THROW(std::logic_error, "data member deactivated"); 
+    }
+    OPM_HOST_DEVICE T* operator->()
+    { 
+        OPM_THROW(std::logic_error, "data member deactivated"); 
+    }
+
 };
 
 } // namespace Opm
