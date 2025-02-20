@@ -24,10 +24,16 @@
 // OPM_TIMEFUNCTION - time block of main part of codes which do not effect performance with name from function
 // OPM_TIMEBLOCK_LOCAL - detailed timing which may effect performance
 // OPM_TIMEFUNCTION_LOCAL - detailed timing which may effect performance with name from function
+#if USE_TRACY
+#if USE_TRACY_LOCAL
+#define DETAILED_PROFILING 1
+#endif
+#endif
 
 #ifndef DETAILED_PROFILING
 #define DETAILED_PROFILING 0 // set to 1 to enable invasive profiling
 #endif
+
 
 #if USE_TRACY
 #define TRACY_ENABLE 1
