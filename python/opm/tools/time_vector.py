@@ -6,7 +6,11 @@ try:
 except ImportError:
     from io import StringIO
 
+import opm.io
+from opm.io.parser import ParseContext
 from opm.io.parser import Parser
+
+error_actions = [("PARSE_INVALID_KEYWORD_COMBINATION", opm.io.action.ignore)]
 
 # This is from the TimeMap.cpp implementation in opm
 ecl_month = {
@@ -270,12 +274,13 @@ class TimeVector(object):
 
         self._add_dates_block(ts)
         start_dt = datetime.datetime(start_date.year, start_date.month, start_date.day)
+        parse_context = ParseContext(error_actions)
         if base_file:
-            deck = Parser().parse(base_file)
+            deck = Parser().parse(base_file, parse_context)
             self._add_deck(deck, start_dt)
 
         if base_string:
-            deck = Parser().parse_string(base_string)
+            deck = Parser().parse_string(base_string, parse_context)
             self._add_deck(deck, start_dt)
 
     def __len__(self):
@@ -391,14 +396,16 @@ class TimeVector(object):
             tv.load("well.sch", date = datetime.datetime(2017, 4, 1))
 
         """
-        deck = Parser().parse(filename)
+        parse_context = ParseContext(error_actions)
+        deck = Parser().parse(filename, parse_context)
         self._add_deck(deck, date)
 
     def load_string(self, deck_string, date=None):
         """
         Like load() - but load from a string literal instead of file.
         """
-        deck = Parser().parse_string(deck_string)
+        parse_context = ParseContext(error_actions)
+        deck = Parser().parse_string(deck_string, parse_context)
         self._add_deck(deck, date)
 
     def __str__(self):
