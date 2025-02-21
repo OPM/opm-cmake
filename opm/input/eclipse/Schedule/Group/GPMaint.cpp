@@ -79,9 +79,6 @@ GPMaint GPMaint::serializationTestObject() {
 }
 
 std::optional<std::pair<std::string, int>> GPMaint::region() const {
-    if (this->m_region_number == 0)
-        return {};
-
     return std::make_pair(this->m_region_name, this->m_region_number);
 }
 

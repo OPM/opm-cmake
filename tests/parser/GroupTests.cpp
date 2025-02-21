@@ -820,13 +820,17 @@ GCONPROD
         BOOST_CHECK( !prod_group.has_control(Phase::GAS, Group::InjectionCMode::RESV) );
         BOOST_CHECK( f1_group.has_control(Group::ProductionCMode::RESV) );
 
+        {
         auto [name, number] = *gpm_prod->region();
         BOOST_CHECK_EQUAL(number, 2);
         BOOST_CHECK_EQUAL(name, "FIPNUM");
-
+        }
+        {
         const auto& gpm_c1 = c1_group.gpmaint();
-        BOOST_CHECK(!gpm_c1->region());
-
+        auto [name, number] = *gpm_c1->region();
+        BOOST_CHECK_EQUAL(number, 0);
+        BOOST_CHECK_EQUAL(name, "FIPNUM");
+        }
         const auto& plat_prod = plat_group.gpmaint();
         BOOST_CHECK( !plat_prod );
     }
