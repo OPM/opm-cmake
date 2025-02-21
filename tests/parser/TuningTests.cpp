@@ -73,6 +73,26 @@ TUNING
 /
 WSEGITER
 /
+
+DATES
+1 FEB 1982 13:55:44 /  -- 11
+/
+TUNING
+2 300 0.3 0.30 6 0.6 0.2 2.25 2E20 10.0/
+/
+/
+NEXTSTEP
+ 1 /
+
+DATES
+10 FEB 1982 13:55:44 /  -- 12
+/
+TUNING
+1 300 0.3 0.30 6 0.6 0.2 2.25 2E20 10.0/
+/
+/
+NEXTSTEP
+ 2 /
 )";
 
 
@@ -378,4 +398,16 @@ BOOST_AUTO_TEST_CASE(TuningTest) {
       BOOST_CHECK_EQUAL(NEWTMX, 13);     
 
   }
+  /*** TIMESTEP 11 ***/
+  {
+      std::size_t timestep = 11;
+      BOOST_CHECK_CLOSE(schedule[timestep].max_next_tstep(true), 1.0 * Metric::Time, diff);
+      BOOST_CHECK_CLOSE(schedule[timestep].max_next_tstep(false), 1.0 * Metric::Time, diff);
+  }
+  /*** TIMESTEP 12 ***/
+  {
+      std::size_t timestep = 12;
+      BOOST_CHECK_CLOSE(schedule[timestep].max_next_tstep(true), 1.0 * Metric::Time, diff);
+      BOOST_CHECK_CLOSE(schedule[timestep].max_next_tstep(false), 2.0 * Metric::Time, diff);
+  } 
 }
