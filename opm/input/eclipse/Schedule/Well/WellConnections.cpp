@@ -60,7 +60,7 @@
 
 #include <stddef.h>
 
-namespace {
+namespace Opm {
 
     // Compute direction permutation corresponding to completion's
     // direction.  First two elements of return value are directions
@@ -560,25 +560,37 @@ The cell ({},{},{}) in well {} is not active and the connection will be ignored)
         const auto d_factor = record.getItem("D_FACTOR").getSIDouble(0);
         const auto& satTableIdItem = record.getItem("SAT_TABLE");
         const auto state = Connection::StateFromString(record.getItem("STATE").getTrimmedString(0));
+	//
+	m_top.push_back(perf_top.getSIDouble(0));
+	m_bot.push_back(perf_bot.getSIDouble(0));
+	m_skinn.push_back(skin_factor);
+	m_d_factor.push_back(d_factor);
 
+	int copml = -1;
+        m_copml.push_back(copml);
+	m_state.push_back(state);
+
+
+	
         int satTableId = -1;
         bool defaultSatTable = true;
         if (satTableIdItem.hasValue(0) && (satTableIdItem.get<int>(0) > 0)) {
             satTableId = satTableIdItem.get<int>(0);
             defaultSatTable = false;
         }
-
+	m_tab.push_back(satTableId);
         double rw{};
         if (diameterItem.hasValue(0)) {
             rw = diameterItem.getSIDouble(0) / 2;
         }
+	
         else {
             // The Eclipse100 manual does not specify a default value for the wellbore
             // diameter, but the Opm codebase has traditionally implemented a default
             // value of one foot. The same default value is used by Eclipse300.
-            rw = 0.5*unit::feet;
+	  rw = 0.5*unit::feet; // NB probably should be handled in input
         }
-
+	m_rw.push_back(rw);
         // Get the grid
         const auto& ecl_grid = grid.get_grid();
 
@@ -587,26 +599,26 @@ The cell ({},{},{}) in well {} is not active and the connection will be ignored)
 
         // Calulate the x,y,z coordinates of the begin and end of a perforation
         external::cvf::Vec3d p_top, p_bot;
-        double m_top = perf_top.getSIDouble(0), m_bot = perf_bot.getSIDouble(0);
+        double top = perf_top.getSIDouble(0), bot = perf_bot.getSIDouble(0);
         for (size_t i = 0; i < 3 ; ++i) {
-            p_top[i] = linearInterpolation(this->md, this->coord[i], m_top);
-            p_bot[i] = linearInterpolation(this->md, this->coord[i], m_bot);
+            p_top[i] = linearInterpolation(this->md, this->coord[i], top);
+            p_bot[i] = linearInterpolation(this->md, this->coord[i], bot);
         }
         points.push_back(p_top);
-        measured_depths.push_back(m_top);
+        measured_depths.push_back(top);
 
         external::cvf::ref<external::RigWellPath> wellPathGeometry { new external::RigWellPath };
         points.reserve(this->coord[0].size());
         measured_depths.reserve(this->coord[0].size());
         for (size_t i = 0; i < coord[0].size(); ++i) {
-            if (this->md[i] > m_top and this->md[i] < m_bot) {
+            if (this->md[i] > top and this->md[i] < bot) {
                 points.push_back(external::cvf::Vec3d(coord[0][i], coord[1][i], coord[2][i]));
                 measured_depths.push_back(this->md[i]);
             }
         }
 
         points.push_back(p_bot);
-        measured_depths.push_back(m_bot);
+        measured_depths.push_back(bot);
 
         wellPathGeometry->setWellPathPoints(points);
         wellPathGeometry->setMeasuredDepths(measured_depths);
@@ -625,6 +637,8 @@ The cell ({},{},{}) in well {} is not active and the connection will be ignored)
         // exit cell face point and connection length.
         auto intersections = e->cellIntersectionInfosAlongWellPath();
 
+	
+	
         for (size_t is = 0; is < intersections.size(); ++is) {
             const auto ijk = ecl_grid->getIJK(intersections[is].globCellIndex);
 
@@ -666,17 +680,21 @@ The cell ({},{},{}) in well {} is not active and the connection will be ignored)
                 satTableId = props->satnum;
             }
 
-            ctf_props.r0 = -1.0;
+            ctf_props.r0 = -1.0;//NB never set later
             ctf_props.Kh = -1.0;
             if (KhItem.hasValue(0) && (KhItem.getSIDouble(0) > 0.0)) {
                 ctf_props.Kh = KhItem.getSIDouble(0);
             }
-
+	    if(is==0){
+	      m_Kh.push_back(ctf_props.Kh);
+	    }
             ctf_props.CF = -1.0;
             if (CFItem.hasValue(0) && (CFItem.getSIDouble(0) > 0.0)) {
                 ctf_props.CF = CFItem.getSIDouble(0);
             }
-
+	    if(is == 0){
+	      m_conn.push_back(ctf_props.CF);
+	    }
             const auto cell_perm = std::array {
                 props->permx, props->permy, props->permz
             };
@@ -740,6 +758,11 @@ CF and Kh items for well {} must both be specified or both defaulted/negative)",
                                     cell.depth, ctf_props, satTableId,
                                     direction, ctf_kind,
                                     noConn, defaultSatTable);
+		// this->addConnection(-ijk[0], -ijk[1], -ijk[2],
+                //                     -cell.global_index, state,
+                //                     cell.depth, ctf_props, satTableId,
+                //                     direction, ctf_kind,
+                //                     noConn, defaultSatTable);
             }
             else {
                 const auto compl_num = prev->complnum();
@@ -760,6 +783,8 @@ CF and Kh items for well {} must both be specified or both defaulted/negative)",
         }
     }
 
+
+  
     void WellConnections::loadWELTRAJ(const DeckRecord& record,
                                       [[maybe_unused]] const ScheduleGrid&    grid,
                                       [[maybe_unused]] const std::string&     wname,
