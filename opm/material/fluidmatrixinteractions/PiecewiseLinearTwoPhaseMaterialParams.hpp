@@ -242,9 +242,7 @@ public:
 private:
     void swapOrderIfPossibleThrowOtherwise_(ValueVector& swValues, ValueVector& values) const
     {
-        // TODO: comparing saturation values to the actual values we sample from looks strange
-        // TODO: yet changing to swValues.back() breaks tests
-        if (swValues.front() > values.back()) {
+        if (swValues.front() > swValues.back()) {
             // Reverting the order involves swapping which only works for non-consts.
             // The const expr ensures we can create constant parameter views.
             if constexpr (!std::is_const_v<typename ValueVector::value_type> && !std::is_const_v<ValueVector>) {
