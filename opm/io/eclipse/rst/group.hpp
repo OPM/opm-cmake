@@ -3,7 +3,8 @@
 
   This file is part of the Open Porous Media project (OPM).
 
-  OPM is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+  OPM is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
@@ -20,23 +21,27 @@
 #define RST_GROUP
 
 #include <array>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Opm {
-class UnitSystem;
+    class UnitSystem;
+} // namespace Opm
 
-namespace RestartIO {
+namespace Opm::RestartIO {
+    struct RstHeader;
+} // namespace Opm::RestartIO
 
-struct RstHeader;
+namespace Opm::RestartIO {
 
-struct RstGroup {
-    RstGroup(const UnitSystem& unit_system,
-             const RstHeader& header,
+struct RstGroup
+{
+    RstGroup(const UnitSystem&  unit_system,
+             const RstHeader&   header,
              const std::string* zwel,
-             const int * igrp,
-             const float * sgrp,
-             const double * xgrp);
+             const int*         igrp,
+             const float*       sgrp,
+             const double*      xgrp);
 
     std::string name;
 
@@ -49,6 +54,7 @@ struct RstGroup {
     int inj_water_guide_rate_def;
     int inj_gas_guide_rate_def;
     int voidage_group_index;
+    int add_gas_lift_gas;
 
     float oil_rate_limit;
     float water_rate_limit;
@@ -98,11 +104,6 @@ struct RstGroup {
     static constexpr auto UNDEFINED_VALUE = 1.0e20f;
 };
 
+} // namespace Opm::RestartIO
 
-}
-}
-
-
-
-
-#endif
+#endif // RST_GROUP

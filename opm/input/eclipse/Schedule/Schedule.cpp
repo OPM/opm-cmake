@@ -21,13 +21,16 @@
 
 #include <opm/io/eclipse/rst/state.hpp>
 
+#include <opm/output/eclipse/VectorItems/group.hpp>
+
 #include <opm/common/OpmLog/LogUtil.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/utility/OpmInputError.hpp>
-#include <opm/input/eclipse/Parser/InputErrorAction.hpp>
 #include <opm/common/utility/String.hpp>
 #include <opm/common/utility/numeric/cmp.hpp>
 #include <opm/common/utility/shmatch.hpp>
+
+#include <opm/input/eclipse/Parser/InputErrorAction.hpp>
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/TracerConfig.hpp>
@@ -2423,7 +2426,19 @@ namespace {
                     node.as_choke(rst_node.as_choke.value());
                 }
 
-                node.add_gas_lift_gas(rst_node.add_lift_gas);
+                network.update_node(std::move(node));
+            }
+
+            for (const auto& rst_group : rst_state.groups) {
+                if (! network.has_node(rst_group.name)) {
+                    continue;
+                }
+
+                auto node = network.node(rst_group.name);
+                node.add_gas_lift_gas
+                    (rst_group.add_gas_lift_gas ==
+                     RestartIO::Helpers::VectorItems::
+                     IGroup::Value::GLiftGas::Yes);
 
                 network.update_node(std::move(node));
             }
