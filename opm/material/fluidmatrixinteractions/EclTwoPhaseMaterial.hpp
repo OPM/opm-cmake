@@ -33,6 +33,7 @@
 
 #include <opm/material/common/Valgrind.hpp>
 #include <opm/material/common/MathToolbox.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 namespace Opm {
 
@@ -110,6 +111,11 @@ public:
     //! Specify whether the quantities defined by this material law
     //! are dependent on the phase composition
     static constexpr bool isCompositionDependent = false;
+
+    static constexpr bool isHysteresisDependent =
+        GasOilMaterialLaw::isHysteresisDependent
+        || OilWaterMaterialLaw::isHysteresisDependent
+        || GasWaterMaterialLaw::isHysteresisDependent;
 
     template <class ContainerT, class FluidState>
     static Scalar relpermOilInOilGasSystem(const Params& /*params*/,
@@ -192,12 +198,14 @@ public:
                                          Scalar& swMin,
                                          const Params& params)
     {
-        soMax = 1.0 - params.oilWaterParams().krnSwMdc();
-        swMax = params.oilWaterParams().krwSwMdc();
-        swMin = params.oilWaterParams().pcSwMdc();
-        Valgrind::CheckDefined(soMax);
-        Valgrind::CheckDefined(swMax);
-        Valgrind::CheckDefined(swMin);
+        if constexpr (isHysteresisDependent) {
+            soMax = 1.0 - params.oilWaterParams().krnSwMdc();
+            swMax = params.oilWaterParams().krwSwMdc();
+            swMin = params.oilWaterParams().pcSwMdc();
+            Valgrind::CheckDefined(soMax);
+            Valgrind::CheckDefined(swMax);
+            Valgrind::CheckDefined(swMin);
+        }
     }
 
     /*
@@ -212,7 +220,9 @@ public:
                                             const Scalar& swMin,
                                             Params& params)
     {
-        params.oilWaterParams().update(swMin, swMax, 1.0 - soMax);
+        if constexpr (isHysteresisDependent) {
+            params.oilWaterParams().update(swMin, swMax, 1.0 - soMax);
+        }
     }
 
 
@@ -228,12 +238,14 @@ public:
                                        Scalar& somin,
                                        const Params& params)
     {
-        sgmax = 1.0 - params.gasOilParams().krnSwMdc();
-        shmax = params.gasOilParams().krwSwMdc();
-        somin = params.gasOilParams().pcSwMdc();
-        Valgrind::CheckDefined(sgmax);
-        Valgrind::CheckDefined(shmax);
-        Valgrind::CheckDefined(somin);
+        if constexpr (isHysteresisDependent) {
+            sgmax = 1.0 - params.gasOilParams().krnSwMdc();
+            shmax = params.gasOilParams().krwSwMdc();
+            somin = params.gasOilParams().pcSwMdc();
+            Valgrind::CheckDefined(sgmax);
+            Valgrind::CheckDefined(shmax);
+            Valgrind::CheckDefined(somin);
+        }
     }
 
     /*
@@ -247,7 +259,9 @@ public:
                                           const Scalar& somin,
                                           Params& params)
     {
-        params.gasOilParams().update(somin , shmax, 1.0 - sgmax);
+        if constexpr (isHysteresisDependent) {
+            params.gasOilParams().update(somin , shmax, 1.0 - sgmax);
+        }
     }
 
     static Scalar trappedGasSaturation(const Params& params, bool maximumTrapping){

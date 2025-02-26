@@ -239,6 +239,33 @@ public:
         std::copy(values.begin(), values.end(), krnSamples_.begin());
     }
 
+    template<class Serializer>
+    void serializeOp([[maybe_unused]] Serializer& serializer)
+    {
+        // only serializes dynamic state - see update() and updateDynamic_()
+        // therefore: this is a no-op!
+    }
+
+    Scalar SnTrapped([[maybe_unused]] bool maximumTrapping) const
+    {
+        return 0.0;
+    }
+
+    Scalar SnStranded([[maybe_unused]] Scalar sg, [[maybe_unused]] Scalar krg) const
+    {
+        return 0.0;
+    }
+
+    Scalar SwTrapped() const
+    {
+        return 0.0;
+    }
+
+    bool update([[maybe_unused]] Scalar pcSw, [[maybe_unused]] Scalar krwSw, [[maybe_unused]] Scalar krnSw)
+    {
+        return false;
+    }
+
 private:
     void swapOrderIfPossibleThrowOtherwise_(ValueVector& swValues, ValueVector& values) const
     {
