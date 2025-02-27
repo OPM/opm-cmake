@@ -43,8 +43,11 @@ namespace Opm::RestartIO::Helpers::VectorItems {
 
         namespace Value {
             enum IuapElems : int {
-                Regular = 1, // UDA applies to a well or a non-field group.
-                Field   = 2, // UDA applies to the field group.
+                Well = 1,       // UDA applies to a well
+                GrpProd = 2,    // UDA applies to group or FIELD level
+                                // production (GCONPROD keyword)
+                GrpInj = 3,     // UDA applies to group or FIELD level
+                                // injection (GCONINJE keyword)
             };
         } // namespace Value
     } // namespace IUad

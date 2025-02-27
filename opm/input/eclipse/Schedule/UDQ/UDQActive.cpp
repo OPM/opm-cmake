@@ -38,15 +38,70 @@
 #include <fmt/format.h>
 
 namespace {
-    bool isFieldUDA(const std::size_t num_wg_elems,
-                    const int* const  localWgIndex)
-    {
-        // Note: all_of(localWgIndex == 0) corresponds to all_of(IUAP == 1)
-        // in the restart file.  See RstUDQActive constructor.
-        return (num_wg_elems > 1)
-            && std::all_of(localWgIndex, localWgIndex + num_wg_elems,
-                           [](const int wgIdx) { return wgIdx == 0; });
-    }
+    namespace UDAVersionCompat {
+        namespace v0 {
+            bool isFieldUDA(const std::size_t num_wg_elems,
+                            const int* const  localWgIndex)
+            {
+                return (num_wg_elems > 1)
+                    && std::all_of(localWgIndex, localWgIndex + num_wg_elems,
+                                   [](const int wgIdx) { return wgIdx == 1; });
+            }
+        } // namespace v0
+
+        namespace vCurr {
+            namespace prod {
+                bool isFieldUDA(const std::size_t num_wg_elems,
+                                const int* const  localWgIndex)
+                {
+                    return (num_wg_elems == 2)
+                        && (localWgIndex[0] == 1)
+                        && (localWgIndex[1] == 1)
+                        ;
+                }
+            } // namespace prod
+
+            namespace inj {
+                bool isFieldUDA(const std::size_t num_wg_elems,
+                                const int* const  localWgIndex)
+                {
+                    return (num_wg_elems == 3)
+                        && (localWgIndex[0] == 1)
+                        && (localWgIndex[1] == 1)
+                        && (localWgIndex[2] == 2)
+                        ;
+                }
+            } // namespace prod
+        } // namespace vCurr
+    } // namespace UDAVersionCompat
+
+    namespace prod {
+        bool isFieldUDA(const Opm::UDQ::RstFileUDAVersion udaVersion,
+                        const std::size_t                 num_wg_elems,
+                        const int* const                  localWgIndex)
+        {
+            if (udaVersion == Opm::UDQ::RstFileUDAVersion::v0) {
+                return UDAVersionCompat::v0::isFieldUDA(num_wg_elems, localWgIndex);
+            }
+            else if (udaVersion == Opm::UDQ::RstFileUDAVersion::vCurr) {
+                return UDAVersionCompat::vCurr::prod::isFieldUDA(num_wg_elems, localWgIndex);
+            }
+        }
+    } // namespace prod
+
+    namespace inj {
+        bool isFieldUDA(const Opm::UDQ::RstFileUDAVersion udaVersion,
+                        const std::size_t                 num_wg_elems,
+                        const int* const                  localWgIndex)
+        {
+            if (udaVersion == Opm::UDQ::RstFileUDAVersion::v0) {
+                return UDAVersionCompat::v0::isFieldUDA(num_wg_elems, localWgIndex);
+            }
+            else if (udaVersion == Opm::UDQ::RstFileUDAVersion::vCurr) {
+                return UDAVersionCompat::vCurr::inj::isFieldUDA(num_wg_elems, localWgIndex);
+            }
+        }
+    } // namespace inj
 
     template <typename RstUDARecord>
     void loadRstWellUDAs(const RstUDARecord&                     record,
@@ -58,7 +113,7 @@ namespace {
         const auto* localWgIndex = &wgIndex[record.wg_offset + 0];
 
         for (auto i = 0*record.use_count; i < record.use_count; ++i) {
-            udaRecords.emplace_back(record.control, uda, wellNames[localWgIndex[i]]);
+            udaRecords.emplace_back(record.control, uda, wellNames[localWgIndex[i] - 1]);
         }
     }
 
@@ -76,29 +131,31 @@ namespace {
     }
 
     template <typename RstUDARecord>
-    void loadRstGroupProdUDAs(const RstUDARecord&                     record,
+    void loadRstGroupProdUDAs(const Opm::UDQ::RstFileUDAVersion       udaVersion,
+                              const RstUDARecord&                     record,
                               const std::vector<int>&                 wgIndex,
                               const Opm::UDAValue&                    uda,
                               const std::vector<std::string>&         groupNames,
                               std::vector<Opm::UDQActive::RstRecord>& udaRecords)
     {
         loadGroupRstUDA(record, wgIndex,
-                        [control = record.control,
+                        [udaVersion, control = record.control,
                          &groupNames, &uda, &udaRecords]
                         (const std::size_t num_wg_elems,
                          const int* const  localWgIndex)
         {
-            if (isFieldUDA(num_wg_elems, localWgIndex)) {
+            if (prod::isFieldUDA(udaVersion, num_wg_elems, localWgIndex)) {
                 udaRecords.emplace_back(control, uda, "FIELD");
             }
             else {
-                udaRecords.emplace_back(control, uda, groupNames[localWgIndex[0] + 1]);
+                udaRecords.emplace_back(control, uda, groupNames[localWgIndex[0]]);
             }
         });
     }
 
     template <typename RstUDARecord>
-    void loadRstGroupInjUDAs(const RstUDARecord&                     record,
+    void loadRstGroupInjUDAs(const Opm::UDQ::RstFileUDAVersion       udaVersion,
+                             const RstUDARecord&                     record,
                              const std::vector<int>&                 wgIndex,
                              const std::vector<Opm::Phase>&          igPhase,
                              const Opm::UDAValue&                    uda,
@@ -106,19 +163,18 @@ namespace {
                              std::vector<Opm::UDQActive::RstRecord>& udaRecords)
     {
         loadGroupRstUDA(record, wgIndex,
-                        [control = record.control,
-                         &groupNames, &igPhase,
-                         &uda, &udaRecords]
+                        [udaVersion, control = record.control,
+                         &groupNames, &igPhase, &uda, &udaRecords]
                         (const std::size_t num_wg_elems,
                          const int* const  localWgIndex)
         {
-            const auto& group = isFieldUDA(num_wg_elems, localWgIndex)
+            const auto& group = inj::isFieldUDA(udaVersion, num_wg_elems, localWgIndex)
                 ? std::string { "FIELD" }
-                : groupNames[localWgIndex[0] + 1];
+                : groupNames[localWgIndex[0]];
 
             const auto phase = (group == "FIELD")
                 ? igPhase.back()
-                : igPhase[localWgIndex[0]];
+                : igPhase[localWgIndex[0] - 1];
 
             udaRecords.emplace_back(control, uda, group, phase);
         });
@@ -204,7 +260,11 @@ Opm::UDQActive::load_rst(const UnitSystem&               units,
 {
     auto udaRecords = std::vector<RstRecord> {};
 
-    const auto& rst_active = rst_state.udq_active;
+    if (! rst_state.udq_active.has_value()) {
+        return udaRecords;
+    }
+
+    const auto& rst_active = *rst_state.udq_active;
     const auto& wgIndex = rst_active.wg_index;
 
     for (const auto& record : rst_active.iuad) {
@@ -217,10 +277,12 @@ Opm::UDQActive::load_rst(const UnitSystem&               units,
             loadRstWellUDAs(record, wgIndex, uda, well_names, udaRecords);
         }
         else if (UDQ::is_group_production_control(record.control)) {
-            loadRstGroupProdUDAs(record, wgIndex, uda, group_names, udaRecords);
+            loadRstGroupProdUDAs(rst_active.udaVersion, record, wgIndex,
+                                 uda, group_names, udaRecords);
         }
         else {
-            loadRstGroupInjUDAs(record, wgIndex, rst_active.ig_phase,
+            loadRstGroupInjUDAs(rst_active.udaVersion, record,
+                                wgIndex, rst_active.ig_phase,
                                 uda, group_names, udaRecords);
         }
     }

@@ -556,6 +556,8 @@ struct RstUDQActive
     ///
     /// Forms UDA collection from restart file information.
     ///
+    /// \param[in] rstFileVersion.  Restart file version from INTEHEAD.
+    ///
     /// \param[in] iuad.  Restart file IUAD array.
     ///
     /// \param[in] iuap.  Restart file IUAP array.  Wells/groups affected by
@@ -563,9 +565,15 @@ struct RstUDQActive
     ///
     /// \param[in] igph.  Restart file IGPH array.  Injection phases for
     /// groups.
-    RstUDQActive(const std::vector<int>& iuad,
+    RstUDQActive(int rstFileVersion,
+                 const std::vector<int>& iuad,
                  const std::vector<int>& iuap,
                  const std::vector<int>& igph);
+
+    /// UDA restart file version.
+    ///
+    /// Needed to interpret contents of wg_index (IUAP).
+    UDQ::RstFileUDAVersion udaVersion { UDQ::RstFileUDAVersion::vCurr };
 
     /// Wells/groups affected by each UDA.
     std::vector<int> wg_index{};

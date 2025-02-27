@@ -167,16 +167,19 @@ namespace {
         return std::accumulate(iuap.begin(), iuap.end(), 0,
             [](const int n, const auto& rec)
         {
-            const auto kw = Opm::UDQ::keyword(rec.control);
+            switch (Opm::UDQ::keyword(rec.control)) {
+            case Opm::UDAKeyword::GCONINJE:
+                // Group level injection UDA
+                return n + 3;
 
-            const auto is_field_uda =
-                ((kw == Opm::UDAKeyword::GCONPROD) ||
-                 (kw == Opm::UDAKeyword::GCONINJE))
-                && (rec.wgname == "FIELD");
+            case Opm::UDAKeyword::GCONPROD:
+                // Group level production UDA
+                return n + 2;
 
-            // One IUAP entry for each "regular" UDA in WCON* or GCON*.  Two
-            // IUAP entries for each field level UDA in GCON*.
-            return n + 1 + static_cast<int>(is_field_uda);
+            default:
+                // Well level UDA.
+                return n + 1;
+            }
         });
     }
 
