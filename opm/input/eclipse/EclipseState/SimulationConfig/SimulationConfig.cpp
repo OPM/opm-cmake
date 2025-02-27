@@ -104,13 +104,10 @@ namespace Opm {
                 m_diffuse = true;
             }
 
-            this->m_isThermal = runspec.hasKeyword<ParserKeywords::THERMAL>()
-                || runspec.hasKeyword<ParserKeywords::TEMP>();
-
-            this->m_useEnthalpy = runspec.hasKeyword<ParserKeywords::THERMAL>();
+            this->m_isThermal = runspec.hasKeyword<ParserKeywords::THERMAL>();
+            this->m_isTemp = runspec.hasKeyword<ParserKeywords::TEMP>();
 
             if(runspec.hasKeyword<ParserKeywords::TEMP>()){
-                this->m_useEnthalpy = false;
                 if(runspec.hasKeyword<ParserKeywords::THERMAL>()){
                     throw std::invalid_argument {
                         "ERROR: In the RUNSPEC section the BOTH TEMP and THERMAL keyword "
@@ -140,6 +137,7 @@ namespace Opm {
         result.m_VAPOIL = true;
         result.m_VAPWAT = true;
         result.m_isThermal = true;
+        result.m_isTemp = true;
         result.m_diffuse = true;
         result.m_PRECSALT = true;
 
@@ -206,9 +204,9 @@ namespace Opm {
         return this->m_isThermal;
     }
 
-    bool SimulationConfig::useEnthalpy() const
+    bool SimulationConfig::isTemp() const
     {
-        return this->m_useEnthalpy;
+        return this->m_isTemp;
     }
 
     bool SimulationConfig::isDiffusive() const
@@ -233,6 +231,7 @@ namespace Opm {
             && (this->hasDISGASW() == data.hasDISGASW())
             && (this->hasVAPOIL() == data.hasVAPOIL())
             && (this->hasVAPWAT() == data.hasVAPWAT())
+            && (this->isTemp() == data.isTemp())
             && (this->isThermal() == data.isThermal())
             && (this->isDiffusive() == data.isDiffusive())
             && (this->hasPRECSALT() == data.hasPRECSALT())
@@ -252,6 +251,7 @@ namespace Opm {
             && (full_config.hasDISGASW() == rst_config.hasDISGASW())
             && (full_config.hasVAPOIL() == rst_config.hasVAPOIL())
             && (full_config.hasVAPWAT() == rst_config.hasVAPWAT())
+            && (full_config.isTemp() == rst_config.isTemp())
             && (full_config.isThermal() == rst_config.isThermal())
             && (full_config.isDiffusive() == rst_config.isDiffusive())
             && (full_config.hasPRECSALT() == rst_config.hasPRECSALT())

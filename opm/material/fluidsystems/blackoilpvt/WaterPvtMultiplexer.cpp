@@ -73,7 +73,7 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
         setApproach(WaterPvtApproach::BrineCo2);
     else if (eclState.runspec().h2Storage() || eclState.runspec().h2Sol())
         setApproach(WaterPvtApproach::BrineH2);
-    else if (enableThermal && eclState.getSimulationConfig().isThermal())
+    else if (enableThermal && (eclState.getSimulationConfig().isThermal() || eclState.getSimulationConfig().isTemp()))
         setApproach(WaterPvtApproach::ThermalWater);
     else if (!eclState.getTableManager().getPvtwTable().empty())
         setApproach(WaterPvtApproach::ConstantCompressibilityWater);
