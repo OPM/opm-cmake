@@ -246,32 +246,15 @@ void Opm::RestartIO::RstUDQ::ensureValidNameIndex() const
 Opm::RestartIO::RstUDQActive::
 RstRecord::RstRecord(const UDAControl  c,
                      const std::size_t i,
-                     const UDAKind     k,
+                     const std::size_t numIuap,
                      const std::size_t u1,
                      const std::size_t u2)
-    : control    (c)
-    , input_index(i)
-    , use_count  (u1)
-    , wg_offset  (u2)
-    , isFieldUDA (k == UDAKind::Field)
+    : control     (c)
+    , input_index (i)
+    , use_count   (u1)
+    , wg_offset   (u2)
+    , num_wg_elems(numIuap)
 {}
-
-namespace {
-    Opm::RestartIO::RstUDQActive::RstRecord::UDAKind udaKind(const int k)
-    {
-        using InKind  = Opm::RestartIO::Helpers::VectorItems::IUad::Value::UDAKind;
-        using OutKind = Opm::RestartIO::RstUDQActive::RstRecord::UDAKind;
-
-        switch (k) {
-        case InKind::Regular: return OutKind::Regular;
-        case InKind::Field:   return OutKind::Field;
-        }
-
-        throw std::invalid_argument {
-            fmt::format("Unknown UDA Kind {}", k)
-        };
-    }
-}
 
 Opm::RestartIO::RstUDQActive::
 RstUDQActive(const std::vector<int>& iuad_arg,
@@ -291,7 +274,7 @@ RstUDQActive(const std::vector<int>& iuad_arg,
 
         this->iuad.emplace_back(UDQ::udaControl(uda[Ix::UDACode]),
                                 uda[Ix::UDQIndex] - 1,
-                                udaKind(uda[Ix::Kind]),
+                                uda[Ix::NumIuapElm],
                                 uda[Ix::UseCount],
                                 uda[Ix::Offset] - 1);
     }
