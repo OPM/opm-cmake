@@ -873,16 +873,16 @@ int Opm::RestartIO::InteHEAD::numRsegElem(const ::Opm::Phases& phase)
         + phase.active(::Opm::Phase::WATER);
 
     switch (nact) {
-    case 1: return 126;
-    case 2: return 134;
-    case 3: return 146;
+    case 1: return 127;
+    case 2: return 135;
+    case 3: return 147;
     }
 
     throw std::invalid_argument {
         "NRSEGZ is not supported for " +
-            std::to_string(nact) +
-            " active phases"
-            };
+        std::to_string(nact) +
+        " active phases"
+    };
 }
 
 // =====================================================================

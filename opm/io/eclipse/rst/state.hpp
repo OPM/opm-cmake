@@ -36,6 +36,7 @@
 
 #include <ctime>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -73,7 +74,7 @@ struct RstState
     std::vector<RstWell> wells;
     std::vector<RstGroup> groups;
     std::vector<RstUDQ> udqs;
-    RstUDQActive udq_active;
+    std::optional<RstUDQActive> udq_active;
     std::vector<RstAction> actions;
     Tuning tuning;
     OilVaporizationProperties oilvap;

@@ -143,7 +143,6 @@ public:
         /// which this UDA supplies the numeric value.
         OutputRecord(const std::string& udq_arg,
                      const std::size_t  input_index_arg,
-                     const std::size_t  use_index_arg,
                      const std::string& wgname_arg,
                      const UDAControl   control_arg);
 
@@ -178,7 +177,6 @@ public:
         {
             serializer(udq);
             serializer(input_index);
-            serializer(use_index);
             serializer(wgname);
             serializer(control);
             serializer(uda_code);
@@ -191,9 +189,6 @@ public:
         /// Zero-based index in order of appearance of the UDQ use for this
         /// UDA.
         std::size_t input_index;
-
-        /// IUAP array start offset.
-        std::size_t use_index = 0;
 
         /// Constraint keyword and item/limit for which this UDA supplies
         /// the numeric value.
@@ -401,17 +396,6 @@ private:
     /// Form output_data structure from input_data.
     void constructOutputRecords() const;
 };
-
-// ===========================================================================
-
-/// Predicate for field level UDAs
-///
-/// \param[in] record IUAD restart file UDA record
-///
-/// \return Whether or not \p record applies at the field level.  In other
-/// words, whether or not the \p record is a UDA in GCONPROD or GCONINJE
-/// that applies to the FIELD group.
-bool isFieldUDA(const UDQActive::OutputRecord& record);
 
 } // namespace Opm
 

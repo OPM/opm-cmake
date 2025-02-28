@@ -65,10 +65,6 @@ namespace Opm { namespace RestartIO {
             /// choking is disabled.
             std::optional<std::string> as_choke{};
 
-            /// Whether or not to include lift gas of subordinate wells as
-            /// part of the produced gas entering the network at this node.
-            bool add_lift_gas{false};
-
             /// Node pressure
             double pressure{};
         };

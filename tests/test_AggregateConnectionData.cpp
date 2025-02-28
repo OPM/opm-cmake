@@ -66,8 +66,8 @@ namespace {
         explicit MockIH(const int numWells,
                         const int nsegWell     =  1,   // E100
                         const int ncwMax       = 20,
-                        const int iConnPerConn =  25,  // NICONZ
-                        const int sConnPerConn =  41,  // NSCONZ
+                        const int iConnPerConn =  26,  // NICONZ
+                        const int sConnPerConn =  42,  // NSCONZ
                         const int xConnPerConn =  58); // NXCONZ
 
         std::vector<int> value;
@@ -862,22 +862,25 @@ BOOST_AUTO_TEST_CASE(InactiveCell)
 
     using IC = ::Opm::RestartIO::Helpers::VectorItems::IConn::index;
 
-    const auto iconn0 = conn0.getIConn();
-    const auto iconn1 = conn1.getIConn();
+    const auto& iconn0 = conn0.getIConn();
+    const auto& iconn1 = conn1.getIConn();
 
     for (std::size_t conn_index = 0; conn_index < num_test_connections; ++conn_index) {
-        const std::size_t offset1 = conn_index * ih.niconz;
-        const std::size_t offset0 = offset1 + (conn_index >= 2)*ih.niconz;
+        const auto* icon_0 = &iconn0[(conn_index + (conn_index > 1)) * ih.niconz];
+        const auto* icon_1 = &iconn1[conn_index * ih.niconz];
 
         for (std::size_t elm_index = 0; elm_index < ih.niconz; ++elm_index) {
-            if (elm_index == IC::SeqIndex && conn_index >= 2) {
+            const auto ic0 = icon_0[elm_index];
+            const auto ic1 = icon_1[elm_index];
+
+            if (((elm_index == IC::SeqIndex) || (elm_index == IC::ConnIdx)) &&
+                (conn_index > 1))
+            {
                 // Comparing the connection ID - which should be different;
-                BOOST_CHECK_EQUAL(iconn1[offset1 + elm_index] + 1,
-                                  iconn0[offset0 + elm_index]);
+                BOOST_CHECK_EQUAL(ic0, ic1 + 1);
             }
             else {
-                BOOST_CHECK_EQUAL(iconn1[offset1 + elm_index],
-                                  iconn0[offset0 + elm_index]);
+                BOOST_CHECK_EQUAL(ic0, ic1);
             }
         }
     }
