@@ -80,7 +80,7 @@ public:
      *
      */
     template <class FluidState>
-    static void solve(FluidState& fluid_state,
+    static bool solve(FluidState& fluid_state,
                       const std::string& twoPhaseMethod,
                       Scalar flash_tolerance,
                       const EOSType& eos_type,
@@ -116,6 +116,8 @@ public:
 
         // we update the derivatives in fluid_state
         updateDerivatives_(fluid_state_scalar, fluid_state, eos_type, is_single_phase);
+
+        return is_single_phase;
     } //end solve
 
     /*!
