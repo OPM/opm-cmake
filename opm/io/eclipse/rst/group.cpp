@@ -3,7 +3,8 @@
 
   This file is part of the Open Porous Media project (OPM).
 
-  OPM is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+  OPM is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
@@ -16,32 +17,32 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <opm/io/eclipse/rst/group.hpp>
+
 #include <opm/common/utility/String.hpp>
 
 #include <opm/io/eclipse/rst/header.hpp>
-#include <opm/io/eclipse/rst/group.hpp>
 
 #include <opm/output/eclipse/VectorItems/group.hpp>
+
 #include <opm/input/eclipse/Units/UnitSystem.hpp>
 
-
 namespace VI = ::Opm::RestartIO::Helpers::VectorItems;
+using M = ::Opm::UnitSystem::measure;
 
-namespace Opm {
-namespace RestartIO {
+Opm::RestartIO::RstGroup::RstGroup(const ::Opm::UnitSystem& unit_system,
+                                   const RstHeader&         header,
+                                   const std::string*       zwel,
+                                   const int*               igrp,
+                                   const float*             sgrp,
+                                   const double*            xgrp) :
+    // -------------------------------------------------------------------------
 
-using M  = ::Opm::UnitSystem::measure;
-
-
-RstGroup::RstGroup(const ::Opm::UnitSystem& unit_system,
-                   const RstHeader& header,
-                   const std::string* zwel,
-                   const int * igrp,
-                   const float * sgrp,
-                   const double * xgrp) :
     name(trim_copy(zwel[0])),
-    parent_group(igrp[header.nwgmax + VI::IGroup::ParentGroup] ),
-    // prod_active_cmode(igrp[header.nwgmax + VI::IGroup::ProdActiveCMode]),
+
+    // -------------------------------------------------------------------------
+
+    parent_group(igrp[header.nwgmax + VI::IGroup::ParentGroup]),
     prod_cmode(igrp[header.nwgmax + VI::IGroup::GConProdCMode]),
     winj_cmode(igrp[header.nwgmax + VI::IGroup::GConInjeWInjCMode]),
     ginj_cmode(igrp[header.nwgmax + VI::IGroup::GConInjeGInjCMode]),
@@ -50,6 +51,10 @@ RstGroup::RstGroup(const ::Opm::UnitSystem& unit_system,
     inj_water_guide_rate_def(igrp[header.nwgmax + VI::IGroup::GConInjeWaterGuideRateMode]),
     inj_gas_guide_rate_def(igrp[header.nwgmax + VI::IGroup::GConInjeGasGuideRateMode]),
     voidage_group_index(igrp[header.nwgmax + VI::IGroup::VoidageGroupIndex]),
+    add_gas_lift_gas(igrp[header.nwgmax + VI::IGroup::AddGLiftGasAsProducedGas]),
+
+    // -------------------------------------------------------------------------
+
     // The values oil_rate_limit -> gas_voidage_limit will be used in UDA
     // values. The UDA values are responsible for unit conversion and raw values
     // are internalized here.
@@ -72,6 +77,9 @@ RstGroup::RstGroup(const ::Opm::UnitSystem& unit_system,
     inj_gas_guide_rate(            sgrp[VI::SGroup::gasGuideRate]),
     gas_consumption_rate(          sgrp[VI::SGroup::GasConsumptionRate]),      // UDA, stored in output units
     gas_import_rate(               sgrp[VI::SGroup::GasImportRate]),           // UDA, stored in output units
+
+    // -------------------------------------------------------------------------
+
     oil_production_rate(           unit_system.to_si(M::liquid_surface_rate,   xgrp[VI::XGroup::OilPrRate])),
     water_production_rate(         unit_system.to_si(M::liquid_surface_rate,   xgrp[VI::XGroup::WatPrRate])),
     gas_production_rate(           unit_system.to_si(M::gas_surface_rate,      xgrp[VI::XGroup::GasPrRate])),
@@ -96,9 +104,4 @@ RstGroup::RstGroup(const ::Opm::UnitSystem& unit_system,
     history_total_gas_injection(   unit_system.to_si(M::gas_surface_volume,    xgrp[VI::XGroup::HistGasInjTotal])),
     gas_consumption_total(         unit_system.to_si(M::gas_surface_volume,    xgrp[VI::XGroup::GasConsumptionTotal])),
     gas_import_total(              unit_system.to_si(M::gas_surface_volume,    xgrp[VI::XGroup::GasImportTotal]))
-{
-}
-
-
-}
-}
+{}

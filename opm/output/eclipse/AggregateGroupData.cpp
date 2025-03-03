@@ -25,11 +25,12 @@
 #include <opm/output/eclipse/VectorItems/intehead.hpp>
 
 #include <opm/input/eclipse/Schedule/GasLiftOpt.hpp>
-#include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
-#include <opm/input/eclipse/Schedule/SummaryState.hpp>
-#include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSump.hpp>
 #include <opm/input/eclipse/Schedule/Group/Group.hpp>
+#include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
+#include <opm/input/eclipse/Schedule/Network/Node.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
+#include <opm/input/eclipse/Schedule/SummaryState.hpp>
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
 
 #include <algorithm>
@@ -38,8 +39,8 @@
 #include <exception>
 #include <map>
 #include <optional>
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -56,7 +57,6 @@
 // Class Opm::RestartIO::Helpers::AggregateGroupData
 // ---------------------------------------------------------------------
 
-
 namespace {
 
 // maximum number of groups
@@ -70,8 +70,11 @@ int nwgmax(const std::vector<int>& inteHead)
 {
     return inteHead[Opm::RestartIO::Helpers::VectorItems::NWGMAX];
 }
- namespace value = ::Opm::RestartIO::Helpers::VectorItems::IGroup::Value;
- value::GuideRateMode GuideRateModeFromGuideRateProdTarget(Opm::Group::GuideRateProdTarget grpt) {
+
+namespace value = ::Opm::RestartIO::Helpers::VectorItems::IGroup::Value;
+value::GuideRateMode
+GuideRateModeFromGuideRateProdTarget(Opm::Group::GuideRateProdTarget grpt)
+{
     switch (grpt) {
         case Opm::Group::GuideRateProdTarget::OIL:
             return value::GuideRateMode::Oil;
@@ -104,7 +107,6 @@ int nwgmax(const std::vector<int>& inteHead)
     }
 }
 
-
 template <typename GroupOp>
 void groupLoop(const std::vector<const Opm::Group*>& groups,
                GroupOp&&                             groupOp)
@@ -121,16 +123,9 @@ void groupLoop(const std::vector<const Opm::Group*>& groups,
     }
 }
 
-template <typename T>
-std::optional<int> findInVector(const std::vector<T>  & vecOfElements, const T  & element)
-{
-    // Find given element in vector
-    auto it = std::find(vecOfElements.begin(), vecOfElements.end(), element);
-
-    return (it != vecOfElements.end()) ? std::optional<int>{std::distance(vecOfElements.begin(), it)} : std::nullopt;
-}
-
-int currentGroupLevel(const Opm::Schedule& sched, const Opm::Group& group, const size_t simStep)
+int currentGroupLevel(const Opm::Schedule& sched,
+                      const Opm::Group& group,
+                      const std::size_t simStep)
 {
     auto current = group;
     int level = 0;
@@ -142,7 +137,11 @@ int currentGroupLevel(const Opm::Schedule& sched, const Opm::Group& group, const
     return level;
 }
 
-void groupCurrentlyProductionControllable(const Opm::Schedule& sched, const Opm::SummaryState& sumState, const Opm::Group& group, const size_t simStep, bool& controllable)
+void groupCurrentlyProductionControllable(const Opm::Schedule& sched,
+                                          const Opm::SummaryState& sumState,
+                                          const Opm::Group& group,
+                                          const std::size_t simStep,
+                                          bool& controllable)
 {
     using wellCtrlMode   = ::Opm::RestartIO::Helpers::VectorItems::IWell::Value::WellCtrlMode;
     if (controllable)
@@ -175,15 +174,22 @@ void groupCurrentlyProductionControllable(const Opm::Schedule& sched, const Opm:
     }
 }
 
-
-bool groupCurrentlyProductionControllable(const Opm::Schedule& sched, const Opm::SummaryState& sumState, const Opm::Group& group, const size_t simStep) {
+bool groupCurrentlyProductionControllable(const Opm::Schedule& sched,
+                                          const Opm::SummaryState& sumState,
+                                          const Opm::Group& group,
+                                          const std::size_t simStep)
+{
     bool controllable = false;
     groupCurrentlyProductionControllable(sched, sumState, group, simStep, controllable);
     return controllable;
 }
 
-
-void groupCurrentlyInjectionControllable(const Opm::Schedule& sched, const Opm::SummaryState& sumState, const Opm::Group& group, const Opm::Phase& iPhase, const size_t simStep, bool& controllable)
+void groupCurrentlyInjectionControllable(const Opm::Schedule& sched,
+                                         const Opm::SummaryState& sumState,
+                                         const Opm::Group& group,
+                                         const Opm::Phase& iPhase,
+                                         const std::size_t simStep,
+                                         bool& controllable)
 {
     using wellCtrlMode   = ::Opm::RestartIO::Helpers::VectorItems::IWell::Value::WellCtrlMode;
     if (controllable)
@@ -223,7 +229,12 @@ void groupCurrentlyInjectionControllable(const Opm::Schedule& sched, const Opm::
     }
 }
 
-bool groupCurrentlyInjectionControllable(const Opm::Schedule& sched, const Opm::SummaryState& sumState, const Opm::Group& group, const Opm::Phase& iPhase, const size_t simStep) {
+bool groupCurrentlyInjectionControllable(const Opm::Schedule& sched,
+                                         const Opm::SummaryState& sumState,
+                                         const Opm::Group& group,
+                                         const Opm::Phase& iPhase,
+                                         const std::size_t simStep)
+{
     bool controllable = false;
     groupCurrentlyInjectionControllable(sched, sumState, group, iPhase, simStep, controllable);
     return controllable;
@@ -236,10 +247,12 @@ bool groupCurrentlyInjectionControllable(const Opm::Schedule& sched, const Opm::
   optional if no such group can be found.
 */
 
-std::optional<Opm::Group> controlGroup(const Opm::Schedule& sched,
-                                       const Opm::SummaryState& sumState,
-                                       const Opm::Group& group,
-                                       const std::size_t simStep) {
+std::optional<Opm::Group>
+controlGroup(const Opm::Schedule& sched,
+             const Opm::SummaryState& sumState,
+             const Opm::Group& group,
+             const std::size_t simStep)
+{
     auto current = group;
     bool isField = false;
     while (!isField) {
@@ -262,16 +275,17 @@ std::optional<Opm::Group> controlGroup(const Opm::Schedule& sched,
     return {};
 }
 
-
-std::optional<Opm::Group>  injectionControlGroup(const Opm::Schedule& sched,
-        const Opm::SummaryState& sumState,
-        const Opm::Group& group,
-        const std::string& curGroupInjCtrlKey,
-        const std::string& curFieldInjCtrlKey,
-        const size_t simStep)
 //
-// returns group of higher (highest) level group with active control different from (NONE or FLD)
+// returns group of higher (highest) level group with active control
+// different from (NONE or FLD)
 //
+std::optional<Opm::Group>
+injectionControlGroup(const Opm::Schedule& sched,
+                      const Opm::SummaryState& sumState,
+                      const Opm::Group& group,
+                      const std::string& curGroupInjCtrlKey,
+                      const std::string& curFieldInjCtrlKey,
+                      const std::size_t simStep)
 {
     auto current = group;
     bool isField = false;
@@ -298,7 +312,7 @@ std::optional<Opm::Group>  injectionControlGroup(const Opm::Schedule& sched,
         }
     }
     return {};
-} // namespace
+}
 
 namespace IGrp {
 std::size_t entriesPerGroup(const std::vector<int>& inteHead)
@@ -317,18 +331,16 @@ allocate(const std::vector<int>& inteHead)
     };
 }
 
-
-
 template <class IGrpArray>
 void gconprodCMode(const Opm::Group& group,
                    const int nwgmax,
-                   IGrpArray& iGrp) {
+                   IGrpArray& iGrp)
+{
     using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
 
     const auto& prod_cmode = group.prod_cmode();
     iGrp[nwgmax + IGroup::GConProdCMode] = Opm::Group::ProductionCMode2Int(prod_cmode);
 }
-
 
 template <class IGrpArray>
 void productionGroup(const Opm::Schedule&     sched,
@@ -562,8 +574,6 @@ std::tuple<int, int, int, int> injectionGroup(const Opm::Schedule&     sched,
     return {high_level_ctrl, current_cmode, gconinje_cmode, guide_rate_def};
 }
 
-
-
 template <class IGrpArray>
 void injectionGroup(const Opm::Schedule&     sched,
                     const Opm::Group&        group,
@@ -573,28 +583,33 @@ void injectionGroup(const Opm::Schedule&     sched,
                     IGrpArray&               iGrp)
 {
     using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
+
     const bool is_field = group.name() == "FIELD";
-    using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
 
-
-    // set "default value" for production higher level control in case a group is only injection group
+    // Set "default value" for production higher level control in case a
+    // group is only injection group
     if (group.isInjectionGroup() && !group.isProductionGroup()) {
         iGrp[nwgmax + IGroup::ProdHighLevCtrl] = 1;
     }
-    //Special treatment of groups with no GCONINJE data
+
+    // Special treatment of groups with no GCONINJE data
     if (group.getGroupType() == Opm::Group::GroupType::NONE) {
         if (is_field) {
             iGrp[nwgmax + IGroup::WInjHighLevCtrl] = 0;
             iGrp[nwgmax + IGroup::GInjHighLevCtrl] = 0;
-        } else {
+        }
+        else {
             //set default value for the group's availability for higher level control for injection
             iGrp[nwgmax + IGroup::WInjHighLevCtrl] = (groupCurrentlyInjectionControllable(sched, sumState, group, Opm::Phase::WATER, simStep) ) ? 1 : -1;
             iGrp[nwgmax + IGroup::GInjHighLevCtrl] = (groupCurrentlyInjectionControllable(sched, sumState, group, Opm::Phase::GAS, simStep) ) ? 1 : -1;
         }
+
         return;
     }
+
     {
         iGrp[nwgmax + IGroup::VoidageGroupIndex] = group.insert_index();
+
         for (const auto& [phase, inj_prop] : group.injectionProperties()) {
             if (inj_prop.cmode == Opm::Group::InjectionCMode::VREP &&
                 inj_prop.voidage_group.has_value()) {
@@ -607,17 +622,20 @@ void injectionGroup(const Opm::Schedule&     sched,
         }
     }
 
-    {
-        if (group.hasInjectionControl(Opm::Phase::WATER)) {
-            auto [high_level_ctrl, active_cmode, gconinje_cmode, guide_rate_def] = injectionGroup(sched, group, nwgmax, simStep, sumState, Opm::Phase::WATER);
-            iGrp[nwgmax + IGroup::WInjHighLevCtrl] = high_level_ctrl;
-            iGrp[nwgmax + IGroup::WInjActiveCMode] = active_cmode;
-            iGrp[nwgmax + IGroup::GConInjeWInjCMode] = gconinje_cmode;
-            iGrp[nwgmax + IGroup::GConInjeWaterGuideRateMode] = guide_rate_def;
-        }
+    if (group.hasInjectionControl(Opm::Phase::WATER)) {
+        const auto& [high_level_ctrl, active_cmode, gconinje_cmode, guide_rate_def] =
+            injectionGroup(sched, group, nwgmax, simStep, sumState, Opm::Phase::WATER);
+
+        iGrp[nwgmax + IGroup::WInjHighLevCtrl] = high_level_ctrl;
+        iGrp[nwgmax + IGroup::WInjActiveCMode] = active_cmode;
+        iGrp[nwgmax + IGroup::GConInjeWInjCMode] = gconinje_cmode;
+        iGrp[nwgmax + IGroup::GConInjeWaterGuideRateMode] = guide_rate_def;
     }
+
     {
-        auto [high_level_ctrl, active_cmode, gconinje_cmode, guide_rate_def] = injectionGroup(sched, group, nwgmax, simStep, sumState, Opm::Phase::GAS);
+        const auto& [high_level_ctrl, active_cmode, gconinje_cmode, guide_rate_def] =
+            injectionGroup(sched, group, nwgmax, simStep, sumState, Opm::Phase::GAS);
+
         iGrp[nwgmax + IGroup::GInjHighLevCtrl] = high_level_ctrl;
         iGrp[nwgmax + IGroup::GInjActiveCMode] = active_cmode;
         iGrp[nwgmax + IGroup::GConInjeGInjCMode] = gconinje_cmode;
@@ -626,21 +644,41 @@ void injectionGroup(const Opm::Schedule&     sched,
 }
 
 template <class IGrpArray>
-void storeNodeSequenceNo(const Opm::Schedule& sched,
-                    const Opm::Group& group,
-                    const int nwgmax,
-                    const std::size_t simStep,
-                    IGrpArray& iGrp) {
+void storeNetworkNodeInformation(const Opm::Schedule& sched,
+                                 const std::string&   group,
+                                 const int            nwgmax,
+                                 const std::size_t    simStep,
+                                 IGrpArray&           iGrp)
+{
+    namespace IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup;
+    using Ix = IGroup::index;
 
-    using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
+    const auto& network = sched[simStep].network();
+    if (! network.active()) {
+        return;
+    }
 
-    const auto& netwrk = sched[simStep].network();
-    const auto seq_ind = findInVector(netwrk.node_names(), group.name());
+    auto& nodeNumber = iGrp[nwgmax + Ix::NodeNumber];
+    auto& addGLiftGas = iGrp[nwgmax + Ix::AddGLiftGasAsProducedGas];
 
-    // The igrp node number is equal to the node sequence number from the BRANPROP keyword
-    // for the groups that also are nodes in the external network (BRANPROP, NODEPROP)
-    // If not - the node numbr is zero.
-    iGrp[nwgmax + IGroup::NodeNumber] = seq_ind ? seq_ind.value()+1 : 0;
+    // For groups that are also nodes in the extended network (BRANPROP,
+    // NODEPROP), the IGRP node number is the 1-based node sequence number
+    // from the BRANPROP keyword.  For all other groups, the node number is
+    // zero.
+    const auto& nodeNames = network.node_names();
+    auto seqIndPos = std::find(nodeNames.begin(), nodeNames.end(), group);
+    if (seqIndPos == nodeNames.end()) {
+        nodeNumber = 0;
+        addGLiftGas = IGroup::Value::GLiftGas::No;
+    }
+    else {
+        nodeNumber = 1 + static_cast<int>
+            (std::distance(nodeNames.begin(), seqIndPos));
+
+        addGLiftGas = network.node(group).add_gas_lift_gas()
+            ? IGroup::Value::GLiftGas::Yes
+            : IGroup::Value::GLiftGas::No;
+    }
 }
 
 template <class IGrpArray>
@@ -649,7 +687,8 @@ void storeGroupTree(const Opm::Schedule& sched,
                     const int nwgmax,
                     const int ngmaxz,
                     const std::size_t simStep,
-                    IGrpArray& iGrp) {
+                    IGrpArray& iGrp)
+{
 
     namespace Value = ::Opm::RestartIO::Helpers::VectorItems::IGroup::Value;
     using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
@@ -691,19 +730,18 @@ void storeGroupTree(const Opm::Schedule& sched,
     iGrp[nwgmax + IGroup::GroupLevel] = currentGroupLevel(sched, group, simStep);
 }
 
-
 template <class IGrpArray>
 void storeFlowingWells(const Opm::Group&        group,
                        const int                nwgmax,
                        const Opm::SummaryState& sumState,
-                       IGrpArray&               iGrp) {
+                       IGrpArray&               iGrp)
+{
     using IGroup = ::Opm::RestartIO::Helpers::VectorItems::IGroup::index;
     const bool is_field = group.name() == "FIELD";
     const double g_act_pwells = is_field ? sumState.get("FMWPR", 0) : sumState.get_group_var(group.name(), "GMWPR", 0);
     const double g_act_iwells = is_field ? sumState.get("FMWIN", 0) : sumState.get_group_var(group.name(), "GMWIN", 0);
     iGrp[nwgmax + IGroup::FlowingWells] = static_cast<int>(g_act_pwells) + static_cast<int>(g_act_iwells);
 }
-
 
 template <class IGrpArray>
 void staticContrib(const Opm::Schedule&     sched,
@@ -719,15 +757,16 @@ void staticContrib(const Opm::Schedule&     sched,
 
     storeGroupTree(sched, group, nwgmax, ngmaxz, simStep, iGrp);
 
-    //node-number for groups in external network (according to sequence in BRANPROP)
-    storeNodeSequenceNo(sched, group, nwgmax, simStep, iGrp);
+    // Node number and other node properties for groups, i.e., leaf nodes,
+    // in extended network model.
+    storeNetworkNodeInformation(sched, group.name(), nwgmax, simStep, iGrp);
 
     storeFlowingWells(group, nwgmax, sumState, iGrp);
 
-    // Treat all groups for production controls
+    // Treat all groups for production controls.
     productionGroup(sched, group, nwgmax, simStep, sumState, iGrp);
 
-    // Treat all groups for injection controls
+    // Treat all groups for injection controls.
     injectionGroup(sched, group, nwgmax, simStep, sumState, iGrp);
 
     if (is_field)
@@ -1157,9 +1196,8 @@ void staticContrib(const Opm::Group& group, ZGroupArray& zGroup)
     zGroup[0] = group.name();
 }
 } // ZGrp
-} // Anonymous
 
-
+} // Namespace anonymous
 
 // =====================================================================
 
