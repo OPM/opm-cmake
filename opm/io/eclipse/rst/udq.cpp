@@ -246,39 +246,31 @@ void Opm::RestartIO::RstUDQ::ensureValidNameIndex() const
 Opm::RestartIO::RstUDQActive::
 RstRecord::RstRecord(const UDAControl  c,
                      const std::size_t i,
-                     const UDAKind     k,
+                     const std::size_t numIuap,
                      const std::size_t u1,
                      const std::size_t u2)
-    : control    (c)
-    , input_index(i)
-    , use_count  (u1)
-    , wg_offset  (u2)
-    , isFieldUDA (k == UDAKind::Field)
+    : control     (c)
+    , input_index (i)
+    , use_count   (u1)
+    , wg_offset   (u2)
+    , num_wg_elems(numIuap)
 {}
 
-namespace {
-    Opm::RestartIO::RstUDQActive::RstRecord::UDAKind udaKind(const int k)
-    {
-        using InKind  = Opm::RestartIO::Helpers::VectorItems::IUad::Value::UDAKind;
-        using OutKind = Opm::RestartIO::RstUDQActive::RstRecord::UDAKind;
-
-        switch (k) {
-        case InKind::Regular: return OutKind::Regular;
-        case InKind::Field:   return OutKind::Field;
-        }
-
-        throw std::invalid_argument {
-            fmt::format("Unknown UDA Kind {}", k)
-        };
-    }
-}
-
 Opm::RestartIO::RstUDQActive::
-RstUDQActive(const std::vector<int>& iuad_arg,
+RstUDQActive(const int rstFileVersion,
+             const std::vector<int>& iuad_arg,
              const std::vector<int>& iuap,
              const std::vector<int>& igph)
-    : wg_index { iuap }
+    : udaVersion { UDQ::rstFileUDAVersion(rstFileVersion) }
+    , wg_index   { iuap }
 {
+    if (this->udaVersion == UDQ::RstFileUDAVersion::vUnsupp) {
+        throw std::invalid_argument {
+            fmt::format("Restart file version {} is unsupported "
+                        "for UDA restarting.", rstFileVersion)
+        };
+    }
+
     using Ix = Opm::RestartIO::Helpers::VectorItems::IUad::index;
 
     this->iuad.reserve(iuad_arg.size() / UDQDims::entriesPerIUAD());
@@ -289,16 +281,12 @@ RstUDQActive(const std::vector<int>& iuad_arg,
     {
         const auto* uda = &iuad_arg[offset];
 
-        this->iuad.emplace_back(UDQ::udaControl(uda[Ix::UDACode]),
+        this->iuad.emplace_back(UDQ::udaControl(uda[Ix::UDACode], this->udaVersion),
                                 uda[Ix::UDQIndex] - 1,
-                                udaKind(uda[Ix::Kind]),
+                                uda[Ix::NumIuapElm],
                                 uda[Ix::UseCount],
                                 uda[Ix::Offset] - 1);
     }
-
-    std::transform(this->wg_index.begin(), this->wg_index.end(),
-                   this->wg_index.begin(),
-                   [](const int wgIdx) { return wgIdx - 1; });
 
     this->ig_phase.assign(igph.size(), Phase::OIL);
     std::transform(igph.begin(), igph.end(), this->ig_phase.begin(),

@@ -521,17 +521,20 @@ void RstState::add_msw(const std::vector<std::string>& zwel,
 
 void RstState::add_udqs(std::shared_ptr<EclIO::RestartFileView> rstView)
 {
-    const auto& iudq = rstView->getKeyword<int>("IUDQ");
-    const auto& zudn = rstView->getKeyword<std::string>("ZUDN");
-    const auto& zudl = rstView->getKeyword<std::string>("ZUDL");
-
     if (rstView->hasKeyword<int>("IUAD")) {
+        const auto rstFileVersion = rstView->
+            getKeyword<int>("INTEHEAD")[VI::intehead::VERSION];
+
         const auto& iuad = rstView->getKeyword<int>("IUAD");
         const auto& iuap = rstView->getKeyword<int>("IUAP");
         const auto& igph = rstView->getKeyword<int>("IGPH");
 
-        this->udq_active = RstUDQActive(iuad, iuap, igph);
+        this->udq_active.emplace(rstFileVersion, iuad, iuap, igph);
     }
+
+    const auto& iudq = rstView->getKeyword<int>("IUDQ");
+    const auto& zudn = rstView->getKeyword<std::string>("ZUDN");
+    const auto& zudl = rstView->getKeyword<std::string>("ZUDL");
 
     auto udqValues = UDQVectors { std::move(rstView) };
 

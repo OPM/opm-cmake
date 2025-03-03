@@ -470,27 +470,44 @@ namespace {
     namespace iUad {
 
         template <class IUADArray>
-        void staticContrib(const Opm::UDQActive::OutputRecord& udq_record,
-                           const bool                          is_field_uda,
-                           IUADArray&                          iUad)
+        int staticContrib(const Opm::UDQActive::OutputRecord& iuad_record,
+                          const int                           iuap_offset,
+                          IUADArray&                          iUad)
         {
             namespace VI = Opm::RestartIO::Helpers::VectorItems::IUad;
 
-            using Ix   = VI::index;;
-            using Kind = VI::Value::UDAKind;
+            using Ix = VI::index;;
 
-            iUad[Ix::UDACode] = udq_record.uda_code;
-
-            // +1 for one-based indices.
-            iUad[Ix::UDQIndex] = udq_record.input_index + 1;
-
-            iUad[Ix::Kind] = is_field_uda
-                ? Kind::Field : Kind::Regular;
-
-            iUad[Ix::UseCount] = udq_record.use_count;
+            iUad[Ix::UDACode] = iuad_record.uda_code;
 
             // +1 for one-based indices.
-            iUad[Ix::Offset] = udq_record.use_index + 1;
+            iUad[Ix::UDQIndex] = iuad_record.input_index + 1;
+
+            switch (auto& numIuap = iUad[Ix::NumIuapElm];
+                    Opm::UDQ::keyword(iuad_record.control))
+            {
+            case Opm::UDAKeyword::GCONINJE:
+                // Group or field level injection UDA.
+                numIuap = VI::Value::IuapElems::GrpInj;
+                break;
+
+            case Opm::UDAKeyword::GCONPROD:
+                // Group or field level production UDA.
+                numIuap = VI::Value::IuapElems::GrpProd;
+                break;
+
+            default:
+                // Well level UDA.
+                numIuap = VI::Value::IuapElems::Well;
+                break;
+            }
+
+            iUad[Ix::UseCount] = iuad_record.use_count;
+
+            // +1 for one-based indices.
+            iUad[Ix::Offset] = iuap_offset + 1;
+
+            return iUad[Ix::UseCount] * iUad[Ix::NumIuapElm];
         }
 
     } // iUad
@@ -648,42 +665,84 @@ namespace {
 
     namespace iUap {
 
+        void wellUDA(const Opm::ScheduleState& sched,
+                     const std::string&        wname,
+                     std::vector<int>&         wgIndex)
+        {
+            // Well level control.  Use well's insertion index as the IUAP
+            // entry (+1 for one-based indices).
+            wgIndex.push_back(sched.wells(wname).seqIndex() + 1);
+        }
+
+        void groupProductionUDA(const Opm::ScheduleState& sched,
+                                const std::string&        gname,
+                                std::vector<int>&         wgIndex)
+        {
+            // Group level production.  Need to distinguish between the
+            // FIELD and the non-FIELD cases.
+
+            if (gname != "FIELD") {
+                // Non-field production UDA.  IUAP is [ID, 0] in this case.
+                //
+                // As the Schedule object inserts 'FIELD' at index zero, the
+                // group's insert_index() is, serendipitously, already
+                // suitably adjusted to one-based indices for output
+                // purposes.
+                wgIndex.push_back(sched.groups(gname).insert_index());
+                wgIndex.push_back(0);
+            }
+            else {
+                // Field level production UDA.  IUAP is [1, 1] in this case.
+                wgIndex.insert(wgIndex.end(), {1, 1});
+            }
+        }
+
+        void groupInjectionUDA(const Opm::ScheduleState& sched,
+                               const std::string&        gname,
+                               std::vector<int>&         wgIndex)
+        {
+            // Group level injection.  Need to distinguish between the FIELD
+            // and the non-FIELD cases.
+
+            if (gname != "FIELD") {
+                // Non-field injection UDA.  IUAP is [ID, 0, 2].
+                //
+                // As the Schedule object inserts 'FIELD' at index zero, the
+                // group's insert_index() is, serendipitously, already
+                // suitably adjusted to one-based indices for output
+                // purposes.
+                wgIndex.push_back(sched.groups(gname).insert_index());
+                wgIndex.push_back(0);
+                wgIndex.push_back(2);
+            }
+            else {
+                // Field level injection UDA.  IUAP is [1, 1, 2].
+                wgIndex.insert(wgIndex.end(), {1, 1, 2});
+            }
+        }
+
         std::vector<int>
         data(const Opm::ScheduleState&                       sched,
              const std::vector<Opm::UDQActive::InputRecord>& iuap)
         {
             // Construct the current list of well or group sequence numbers
             // to output the IUAP array.
-            auto wg_no = std::vector<int>{};
+            auto wgIndex = std::vector<int>{};
 
             for (const auto& udaRecord : iuap) {
                 switch (Opm::UDQ::keyword(udaRecord.control)) {
                 case Opm::UDAKeyword::WCONPROD:
                 case Opm::UDAKeyword::WCONINJE:
                 case Opm::UDAKeyword::WELTARG:
-                    // Well level control.  Use well's insertion index as
-                    // the IUAP entry (+1 for one-based indices).
-                    wg_no.push_back(sched.wells(udaRecord.wgname).seqIndex() + 1);
+                    wellUDA(sched, udaRecord.wgname, wgIndex);
                     break;
 
                 case Opm::UDAKeyword::GCONPROD:
-                case Opm::UDAKeyword::GCONINJE: {
-                    // Group level control.  Need to distinguish between the
-                    // FIELD and the non-FIELD cases.
+                    groupProductionUDA(sched, udaRecord.wgname, wgIndex);
+                    break;
 
-                    if (const auto& gname = udaRecord.wgname; gname != "FIELD") {
-                        // The Schedule object inserts 'FIELD' at index
-                        // zero.  The group's insert_index() is therefore,
-                        // serendipitously, already suitably adjusted to
-                        // one-based indices for output purposes.
-                        wg_no.push_back(sched.groups(gname).insert_index());
-                    }
-                    else {
-                        // IUAP for field level UDAs is represented by two
-                        // copies of the numeric ID '1'.
-                        wg_no.insert(wg_no.end(), 2, 1);
-                    }
-                }
+                case Opm::UDAKeyword::GCONINJE:
+                    groupInjectionUDA(sched, udaRecord.wgname, wgIndex);
                     break;
 
                 default: {
@@ -700,7 +759,7 @@ namespace {
                 }
             }
 
-            return wg_no;
+            return wgIndex;
         }
 
     } // iUap
@@ -1129,11 +1188,13 @@ collectIUAD(const UDQActive& udqActive, const std::size_t expectNumIUAD)
     this->iUAD_.emplace(WV::NumWindows{ expectNumIUAD },
                         WV::WindowSize{ Opm::UDQDims::entriesPerIUAD() });
 
+    auto iuap_offset = 0;
     auto index = std::size_t{0};
     for (const auto& iuad_record : iuad_records) {
         auto iuad = (*this->iUAD_)[index];
 
-        iUad::staticContrib(iuad_record, isFieldUDA(iuad_record), iuad);
+        iuap_offset +=
+            iUad::staticContrib(iuad_record, iuap_offset, iuad);
 
         ++index;
     }

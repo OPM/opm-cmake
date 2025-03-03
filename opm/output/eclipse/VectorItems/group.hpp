@@ -22,7 +22,70 @@
 
 #include <vector>
 
-namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems {
+namespace Opm::RestartIO::Helpers::VectorItems {
+
+    namespace IGroup {
+        // Observe that these value should not be used as ordinary indices
+        // into the the IGRP vector.  Instead, they should all be treated as
+        // offsets from the "child group" portion of IGRP.  In other words,
+        // the actual index into IGRP should be formed as
+        //
+        //   IGRP[NWGMAX + index]
+        //
+        enum index : std::vector<int>::size_type {
+            NoOfChildGroupsWells = 0,
+            ProdActiveCMode = 1,
+            ProdHighLevCtrl = 5,
+            GuideRateDef = 6,
+            ExceedAction = 7,
+            GConProdCMode = 10,
+            WInjActiveCMode = 16,
+            WInjHighLevCtrl = 17,
+            GConInjeWInjCMode = 19,
+            GConInjeWaterGuideRateMode = 20,
+            GInjActiveCMode = 21,
+            GInjHighLevCtrl = 22,
+            GConInjeGInjCMode = 24,
+            GConInjeGasGuideRateMode = 25,
+            GroupType = 26,
+            GroupLevel = 27,
+            ParentGroup = 28,
+            FlowingWells = 33,
+            NodeNumber = 39,
+
+            // Whether or not lift gas from node's corresponding group's
+            // subordinate groups should be added to the produced gas
+            // entering the network at this node in the extended network
+            // model (NODEPROP(4)).
+            AddGLiftGasAsProducedGas = 53,
+
+            VoidageGroupIndex = 89,
+        };
+
+        namespace Value {
+            enum GuideRateMode : int {
+                None = 0,
+                Oil = 1,
+                Water = 2,
+                Gas = 3,
+                Liquid = 4,
+                Resv = 6,  // need to be verified!!!
+                Potn = 7,
+                Form = 8,
+                Comb = 9,
+            };
+
+            enum GroupType : int {
+                WellGroup = 0,
+                TreeGroup = 1,
+            };
+
+            enum GLiftGas : int {
+                No = 0,
+                Yes = 1,
+            };
+        } // namespace Value
+    } // namespace IGroup
 
     namespace SGroup {
         enum index : std::vector<float>::size_type {
@@ -88,56 +151,6 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
             constexpr auto NoGLOLimit = -10.0f;
         } // namespace Value
     } // SGroup
-
-
-    namespace IGroup {
-    // Observe that these value should not be used as ordinary indices into
-    // the the IGRP vector, they should all be used as IGRP[NWGMAX + $index]
-    enum index : std::vector<int>::size_type {
-        NoOfChildGroupsWells = 0,
-        ProdActiveCMode = 1,
-        ProdHighLevCtrl = 5,
-        GuideRateDef = 6,
-        ExceedAction = 7,
-        GConProdCMode = 10,
-        WInjActiveCMode = 16,
-        WInjHighLevCtrl = 17,
-        GConInjeWInjCMode = 19,
-        GConInjeWaterGuideRateMode = 20,
-        GInjActiveCMode = 21,
-        GInjHighLevCtrl = 22,
-        GConInjeGInjCMode = 24,
-        GConInjeGasGuideRateMode = 25,
-        GroupType = 26,
-        GroupLevel = 27,
-        ParentGroup = 28,
-        FlowingWells = 33,
-        NodeNumber = 39,
-        VoidageGroupIndex = 89
-    };
-
-    namespace Value {
-    enum GuideRateMode : int {
-        None = 0,
-        Oil = 1,
-        Water = 2,
-        Gas = 3,
-        Liquid = 4,
-        Resv = 6,  // need to be verified!!!
-        Potn = 7,
-        Form = 8,
-        Comb = 9,
-    };
-
-    enum GroupType : int {
-        WellGroup = 0,
-        TreeGroup = 1,
-    };
-
-    }
-
-    }
-
 
     namespace XGroup {
         enum index : std::vector<double>::size_type {
@@ -209,6 +222,6 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
         };
     } // XGroup
 
-}}}} // Opm::RestartIO::Helpers::VectorItems
+} // Opm::RestartIO::Helpers::VectorItems
 
 #endif // OPM_OUTPUT_ECLIPSE_VECTOR_GROUP_HPP

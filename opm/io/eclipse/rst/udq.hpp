@@ -506,15 +506,6 @@ struct RstUDQActive
     /// One single UDA
     struct RstRecord
     {
-        enum class UDAKind : int {
-            /// UDA is of a regular kind that applies either to a well or a
-            /// non-field group.
-            Regular,
-
-            /// UDA applies to the field level.
-            Field,
-        };
-
         /// Constructor.
         ///
         /// Convenience only as this enables using vector<>::emplace_back().
@@ -524,7 +515,8 @@ struct RstUDQActive
         /// \param[in] i Input index.  Zero-based order in which the UDQ was
         /// entered.
         ///
-        /// \param[in] k Type of this UDA.
+        /// \param[in] numIuap Number of IUAP elements associated to this
+        /// UDA.
         ///
         /// \param[in] u1 Use count.  Number of times this UDA is used in
         /// this particular way (same keyword and control item, e.g., for
@@ -533,7 +525,7 @@ struct RstUDQActive
         /// \param[in] u2 IUAP start offset.
         RstRecord(UDAControl  c,
                   std::size_t i,
-                  UDAKind     k,
+                  std::size_t numIuap,
                   std::size_t u1,
                   std::size_t u2);
 
@@ -551,8 +543,8 @@ struct RstUDQActive
         /// IUAP start offset.
         std::size_t wg_offset;
 
-        /// Flag for whether or not this UDA applies at the field level.
-        bool isFieldUDA;
+        /// Number of IUAP elements.
+        std::size_t num_wg_elems;
     };
 
     /// Default constructor.
@@ -564,6 +556,8 @@ struct RstUDQActive
     ///
     /// Forms UDA collection from restart file information.
     ///
+    /// \param[in] rstFileVersion.  Restart file version from INTEHEAD.
+    ///
     /// \param[in] iuad.  Restart file IUAD array.
     ///
     /// \param[in] iuap.  Restart file IUAP array.  Wells/groups affected by
@@ -571,9 +565,15 @@ struct RstUDQActive
     ///
     /// \param[in] igph.  Restart file IGPH array.  Injection phases for
     /// groups.
-    RstUDQActive(const std::vector<int>& iuad,
+    RstUDQActive(int rstFileVersion,
+                 const std::vector<int>& iuad,
                  const std::vector<int>& iuap,
                  const std::vector<int>& igph);
+
+    /// UDA restart file version.
+    ///
+    /// Needed to interpret contents of wg_index (IUAP).
+    UDQ::RstFileUDAVersion udaVersion { UDQ::RstFileUDAVersion::vCurr };
 
     /// Wells/groups affected by each UDA.
     std::vector<int> wg_index{};

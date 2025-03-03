@@ -30,8 +30,11 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
+
+#include <fmt/format.h>
 
 namespace {
 
@@ -481,8 +484,9 @@ UDQVarType coerce(const UDQVarType t1, const UDQVarType t2)
         // Note: Can't use typeName() here since that would throw another
         // exception.
         throw std::logic_error {
-            "Cannot coerce between " + std::to_string(static_cast<int>(t1))
-            + " and " + std::to_string(static_cast<int>(t2))
+            fmt::format("Cannot coerce between {} and {}.",
+                        static_cast<std::underlying_type_t<UDQVarType>>(t1),
+                        static_cast<std::underlying_type_t<UDQVarType>>(t2))
         };
     }
 
@@ -496,7 +500,8 @@ UDQVarType coerce(const UDQVarType t1, const UDQVarType t2)
     if (is_restricted_t1 && is_restricted_t2) {
         // t1 != t2, but neither can be coerced into the other.
         throw std::logic_error {
-            "Cannot coerce between " + typeName(t1) + " and " + typeName(t2)
+            fmt::format("Cannot coerce between {} and {}",
+                        typeName(t1), typeName(t2))
         };
     }
 
@@ -553,7 +558,10 @@ std::string typeName(const UDQVarType var_type)
         return "BLOCK_VAR";
 
     default:
-        throw std::runtime_error("Should not be here: " + std::to_string(static_cast<int>(var_type)));
+        throw std::runtime_error {
+            fmt::format("Should not be here: {}",
+                        static_cast<std::underlying_type_t<UDQVarType>>(var_type))
+        };
     }
 }
 
@@ -577,9 +585,8 @@ namespace {
         auto pos = map.find(control);
         if (pos == map.end()) {
             throw std::logic_error {
-                "Unrecognized enum type (" +
-                std::to_string(static_cast<int>(control)) +
-                ") - internal error"
+                fmt::format("Unrecognized enum type ({}) - internal error",
+                            static_cast<std::underlying_type_t<UDAControl>>(control))
             };
         }
 
@@ -597,7 +604,7 @@ UDAKeyword keyword(const UDAControl control)
         {UDAControl::WCONPROD_RESV, UDAKeyword::WCONPROD},
         {UDAControl::WCONPROD_BHP,  UDAKeyword::WCONPROD},
         {UDAControl::WCONPROD_THP,  UDAKeyword::WCONPROD},
-        {UDAControl::WCONPROD_LIFT,  UDAKeyword::WCONPROD},
+        {UDAControl::WCONPROD_LIFT, UDAKeyword::WCONPROD},
 
         // --------------------------------------------------------------
         {UDAControl::WCONINJE_RATE, UDAKeyword::WCONINJE},
@@ -629,50 +636,6 @@ UDAKeyword keyword(const UDAControl control)
     };
 
     return lookup_control_map_value(c2k, control);
-}
-
-int udaCode(const UDAControl control)
-{
-    static const auto c2uda = std::map<UDAControl, int> {
-        {UDAControl::WCONPROD_ORAT,  300'004},
-        {UDAControl::WCONPROD_WRAT,  400'004},
-        {UDAControl::WCONPROD_GRAT,  500'004},
-        {UDAControl::WCONPROD_LRAT,  600'004},
-        {UDAControl::WCONPROD_RESV,  700'004},
-        {UDAControl::WCONPROD_BHP,   800'004},
-        {UDAControl::WCONPROD_THP,   900'004},
-        {UDAControl::WCONPROD_LIFT,   1'100'004},
-
-        // --------------------------------------------------------------
-        {UDAControl::WCONINJE_RATE,  400'003},
-        {UDAControl::WCONINJE_RESV,  500'003},
-        {UDAControl::WCONINJE_BHP,   600'003},
-        {UDAControl::WCONINJE_THP,   700'003},
-
-        // --------------------------------------------------------------
-        {UDAControl::GCONPROD_OIL_TARGET,    200'019},
-        {UDAControl::GCONPROD_WATER_TARGET,  300'019},
-        {UDAControl::GCONPROD_GAS_TARGET,    400'019},
-        {UDAControl::GCONPROD_LIQUID_TARGET, 500'019},
-
-        // --------------------------------------------------------------
-        {UDAControl::GCONINJE_SURFACE_MAX_RATE,      300'017}, // Surface injection rate
-        {UDAControl::GCONINJE_RESV_MAX_RATE,         400'017}, // Reservoir volume injection rate
-        {UDAControl::GCONINJE_TARGET_REINJ_FRACTION, 500'017}, // Reinjection fraction
-        {UDAControl::GCONINJE_TARGET_VOID_FRACTION,  600'017}, // Voidage replacement fraction
-
-        // --------------------------------------------------------------
-        {UDAControl::WELTARG_ORAT,        16},
-        {UDAControl::WELTARG_WRAT,   100'016},
-        {UDAControl::WELTARG_GRAT,   200'016},
-        {UDAControl::WELTARG_LRAT,   300'016},
-        {UDAControl::WELTARG_RESV,   400'016},
-        {UDAControl::WELTARG_BHP,    500'016},
-        {UDAControl::WELTARG_THP,    600'016},
-        {UDAControl::WELTARG_LIFT, 1'000'016},
-    };
-
-    return lookup_control_map_value(c2uda, control);
 }
 
 bool group_control(const UDAControl control)
@@ -746,46 +709,169 @@ bool is_group_production_control(const UDAControl control)
     }
 }
 
-UDAControl udaControl(const int uda_code)
+int udaCode(const UDAControl control)
 {
-    switch (uda_code) {
-    case   300'004: return UDAControl::WCONPROD_ORAT;
-    case   400'004: return UDAControl::WCONPROD_WRAT;
-    case   500'004: return UDAControl::WCONPROD_GRAT;
-    case   600'004: return UDAControl::WCONPROD_LRAT;
-    case   700'004: return UDAControl::WCONPROD_RESV;
-    case   800'004: return UDAControl::WCONPROD_BHP;
-    case   900'004: return UDAControl::WCONPROD_THP;
-    case   1'100'004: return UDAControl::WCONPROD_LIFT;
+    static const auto c2uda = std::map<UDAControl, int> {
+        {UDAControl::WCONPROD_ORAT,   300'004},
+        {UDAControl::WCONPROD_WRAT,   400'004},
+        {UDAControl::WCONPROD_GRAT,   500'004},
+        {UDAControl::WCONPROD_LRAT,   600'004},
+        {UDAControl::WCONPROD_RESV,   700'004},
+        {UDAControl::WCONPROD_BHP,    800'004},
+        {UDAControl::WCONPROD_THP,    900'004},
+        {UDAControl::WCONPROD_LIFT, 1'100'004},
 
-    case   400'003: return UDAControl::WCONINJE_RATE;
-    case   500'003: return UDAControl::WCONINJE_RESV;
-    case   600'003: return UDAControl::WCONINJE_BHP;
-    case   700'003: return UDAControl::WCONINJE_THP;
+        // --------------------------------------------------------------
+        {UDAControl::WCONINJE_RATE, 400'003},
+        {UDAControl::WCONINJE_RESV, 500'003},
+        {UDAControl::WCONINJE_BHP,  600'003},
+        {UDAControl::WCONINJE_THP,  700'003},
 
-    case   200'019: return UDAControl::GCONPROD_OIL_TARGET;
-    case   300'019: return UDAControl::GCONPROD_WATER_TARGET;
-    case   400'019: return UDAControl::GCONPROD_GAS_TARGET;
-    case   500'019: return UDAControl::GCONPROD_LIQUID_TARGET;
+        // --------------------------------------------------------------
+        {UDAControl::GCONPROD_OIL_TARGET,    200'020},
+        {UDAControl::GCONPROD_WATER_TARGET,  300'020},
+        {UDAControl::GCONPROD_GAS_TARGET,    400'020},
+        {UDAControl::GCONPROD_LIQUID_TARGET, 500'020},
 
-    case   300'017: return UDAControl::GCONINJE_SURFACE_MAX_RATE;
-    case   400'017: return UDAControl::GCONINJE_RESV_MAX_RATE;
-    case   500'017: return UDAControl::GCONINJE_TARGET_REINJ_FRACTION;
-    case   600'017: return UDAControl::GCONINJE_TARGET_VOID_FRACTION;
+        // --------------------------------------------------------------
+        {UDAControl::GCONINJE_SURFACE_MAX_RATE,      300'018}, // Surface injection rate
+        {UDAControl::GCONINJE_RESV_MAX_RATE,         400'018}, // Reservoir volume injection rate
+        {UDAControl::GCONINJE_TARGET_REINJ_FRACTION, 500'018}, // Reinjection fraction
+        {UDAControl::GCONINJE_TARGET_VOID_FRACTION,  600'018}, // Voidage replacement fraction
 
-    case        16: return UDAControl::WELTARG_ORAT;
-    case   100'016: return UDAControl::WELTARG_WRAT;
-    case   200'016: return UDAControl::WELTARG_GRAT;
-    case   300'016: return UDAControl::WELTARG_LRAT;
-    case   400'016: return UDAControl::WELTARG_RESV;
-    case   500'016: return UDAControl::WELTARG_BHP;
-    case   600'016: return UDAControl::WELTARG_THP;
-    case 1'000'016: return UDAControl::WELTARG_LIFT;
+        // --------------------------------------------------------------
+        {UDAControl::WELTARG_ORAT,        16},
+        {UDAControl::WELTARG_WRAT,   100'016},
+        {UDAControl::WELTARG_GRAT,   200'016},
+        {UDAControl::WELTARG_LRAT,   300'016},
+        {UDAControl::WELTARG_RESV,   400'016},
+        {UDAControl::WELTARG_BHP,    500'016},
+        {UDAControl::WELTARG_THP,    600'016},
+        {UDAControl::WELTARG_LIFT, 1'000'016},
+    };
+
+    return lookup_control_map_value(c2uda, control);
+}
+
+namespace { namespace UDAVersionCompat {
+
+    namespace v0 {
+        UDAControl udaControl(const int uda_code)
+        {
+            switch (uda_code) {
+            case   300'004: return UDAControl::WCONPROD_ORAT;
+            case   400'004: return UDAControl::WCONPROD_WRAT;
+            case   500'004: return UDAControl::WCONPROD_GRAT;
+            case   600'004: return UDAControl::WCONPROD_LRAT;
+            case   700'004: return UDAControl::WCONPROD_RESV;
+            case   800'004: return UDAControl::WCONPROD_BHP;
+            case   900'004: return UDAControl::WCONPROD_THP;
+            case 1'100'004: return UDAControl::WCONPROD_LIFT;
+
+            case   400'003: return UDAControl::WCONINJE_RATE;
+            case   500'003: return UDAControl::WCONINJE_RESV;
+            case   600'003: return UDAControl::WCONINJE_BHP;
+            case   700'003: return UDAControl::WCONINJE_THP;
+
+            case   200'019: return UDAControl::GCONPROD_OIL_TARGET;
+            case   300'019: return UDAControl::GCONPROD_WATER_TARGET;
+            case   400'019: return UDAControl::GCONPROD_GAS_TARGET;
+            case   500'019: return UDAControl::GCONPROD_LIQUID_TARGET;
+
+            case   300'017: return UDAControl::GCONINJE_SURFACE_MAX_RATE;
+            case   400'017: return UDAControl::GCONINJE_RESV_MAX_RATE;
+            case   500'017: return UDAControl::GCONINJE_TARGET_REINJ_FRACTION;
+            case   600'017: return UDAControl::GCONINJE_TARGET_VOID_FRACTION;
+
+            case        16: return UDAControl::WELTARG_ORAT;
+            case   100'016: return UDAControl::WELTARG_WRAT;
+            case   200'016: return UDAControl::WELTARG_GRAT;
+            case   300'016: return UDAControl::WELTARG_LRAT;
+            case   400'016: return UDAControl::WELTARG_RESV;
+            case   500'016: return UDAControl::WELTARG_BHP;
+            case   600'016: return UDAControl::WELTARG_THP;
+            case 1'000'016: return UDAControl::WELTARG_LIFT;
+            }
+
+            throw std::logic_error {
+                fmt::format("Unknown UDA integer control code {}", uda_code)
+            };
+        }
+    } // namespace v0
+
+    namespace vCurr {
+        UDAControl udaControl(const int uda_code)
+        {
+            switch (uda_code) {
+            case   300'004: return UDAControl::WCONPROD_ORAT;
+            case   400'004: return UDAControl::WCONPROD_WRAT;
+            case   500'004: return UDAControl::WCONPROD_GRAT;
+            case   600'004: return UDAControl::WCONPROD_LRAT;
+            case   700'004: return UDAControl::WCONPROD_RESV;
+            case   800'004: return UDAControl::WCONPROD_BHP;
+            case   900'004: return UDAControl::WCONPROD_THP;
+            case 1'100'004: return UDAControl::WCONPROD_LIFT;
+
+            case   400'003: return UDAControl::WCONINJE_RATE;
+            case   500'003: return UDAControl::WCONINJE_RESV;
+            case   600'003: return UDAControl::WCONINJE_BHP;
+            case   700'003: return UDAControl::WCONINJE_THP;
+
+            case   200'020: return UDAControl::GCONPROD_OIL_TARGET;
+            case   300'020: return UDAControl::GCONPROD_WATER_TARGET;
+            case   400'020: return UDAControl::GCONPROD_GAS_TARGET;
+            case   500'020: return UDAControl::GCONPROD_LIQUID_TARGET;
+
+            case   300'018: return UDAControl::GCONINJE_SURFACE_MAX_RATE;
+            case   400'018: return UDAControl::GCONINJE_RESV_MAX_RATE;
+            case   500'018: return UDAControl::GCONINJE_TARGET_REINJ_FRACTION;
+            case   600'018: return UDAControl::GCONINJE_TARGET_VOID_FRACTION;
+
+            case        16: return UDAControl::WELTARG_ORAT;
+            case   100'016: return UDAControl::WELTARG_WRAT;
+            case   200'016: return UDAControl::WELTARG_GRAT;
+            case   300'016: return UDAControl::WELTARG_LRAT;
+            case   400'016: return UDAControl::WELTARG_RESV;
+            case   500'016: return UDAControl::WELTARG_BHP;
+            case   600'016: return UDAControl::WELTARG_THP;
+            case 1'000'016: return UDAControl::WELTARG_LIFT;
+            }
+
+            throw std::logic_error {
+                fmt::format("Unknown UDA integer control code {}", uda_code)
+            };
+        }
+    } // namespace vCurr
+
+}} // namespace (anonymous)::UDAVersionCompat
+
+RstFileUDAVersion rstFileUDAVersion(const int rstFileVersion)
+{
+    if (rstFileVersion == 201802) {
+        return RstFileUDAVersion::v0;
+    }
+    else if (rstFileVersion == 202204) {
+        return RstFileUDAVersion::vCurr;
     }
 
-    throw std::logic_error {
-        "Unknown UDA integer control code " + std::to_string(uda_code)
-    };
+    return RstFileUDAVersion::vUnsupp;
+}
+
+UDAControl udaControl(const int uda_code, const RstFileUDAVersion udaVersion)
+{
+    switch (udaVersion) {
+    case RstFileUDAVersion::v0:
+        return UDAVersionCompat::v0::udaControl(uda_code);
+
+    case RstFileUDAVersion::vCurr:
+        return UDAVersionCompat::vCurr::udaControl(uda_code);
+
+    default:
+        throw std::invalid_argument {
+            fmt::format("Restart file UDA version {} is unsupported",
+                        static_cast<std::underlying_type_t<RstFileUDAVersion>>(udaVersion))
+        };
+    }
 }
 
 std::string controlName(const UDAControl control)
@@ -862,8 +948,8 @@ std::string controlName(const UDAControl control)
     }
 
     throw std::logic_error {
-        "Unknown UDA control keyword '" +
-        std::to_string(static_cast<int>(control)) + '\''
+        fmt::format("Unknown UDA control keyword '{}'",
+                    static_cast<std::underlying_type_t<UDAControl>>(control))
     };
 }
 
