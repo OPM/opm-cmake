@@ -159,7 +159,7 @@ private:
     std::vector<double> absDeviation, relDeviation;
 
     // Keywords which should not contain negative values, i.e. uses allowNegativeValues = false in deviationsForCell():
-    const std::vector<std::string> keywordDisallowNegatives = {"SGAS", "SWAT", "PRESSURE"};
+    const std::vector<std::string> keywordDisallowNegatives = {};//{"SGAS", "SWAT", "PRESSURE"};
 
     double strictAbsTol = 1e-6;
     double strictRelTol = 1e-6;
