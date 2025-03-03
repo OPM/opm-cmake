@@ -30,6 +30,7 @@
 #include <opm/input/eclipse/Units/UnitSystem.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -37,6 +38,16 @@
 #include <fmt/format.h>
 
 namespace {
+    bool isFieldUDA(const std::size_t num_wg_elems,
+                    const int* const  localWgIndex)
+    {
+        // Note: all_of(localWgIndex == 0) corresponds to all_of(IUAP == 1)
+        // in the restart file.  See RstUDQActive constructor.
+        return (num_wg_elems > 1)
+            && std::all_of(localWgIndex, localWgIndex + num_wg_elems,
+                           [](const int wgIdx) { return wgIdx == 0; });
+    }
+
     template <typename RstUDARecord>
     void loadRstWellUDAs(const RstUDARecord&                     record,
                          const std::vector<int>&                 wgIndex,
@@ -52,22 +63,15 @@ namespace {
     }
 
     template <typename RstUDARecord, typename WGIndexOp>
-    void loadGroupRstUDA(const RstUDARecord&             record,
-                         const std::vector<int>&         wgIndex,
-                         const std::vector<std::string>& groupNames,
-                         WGIndexOp&&                     wgIndexOp)
+    void loadGroupRstUDA(const RstUDARecord&     record,
+                         const std::vector<int>& wgIndex,
+                         WGIndexOp&&             wgIndexOp)
     {
-        using namespace std::string_literals;
-
         const auto* localWgIndex = &wgIndex[record.wg_offset + 0];
 
-        if (record.isFieldUDA) {
-            wgIndexOp(localWgIndex[0], "FIELD"s);
-            return;
-        }
-
         for (auto i = 0*record.use_count; i < record.use_count; ++i) {
-            wgIndexOp(localWgIndex[i], groupNames[localWgIndex[i] + 1]);
+            wgIndexOp(record.num_wg_elems,
+                      &localWgIndex[i*record.num_wg_elems + 0]);
         }
     }
 
@@ -78,12 +82,18 @@ namespace {
                               const std::vector<std::string>&         groupNames,
                               std::vector<Opm::UDQActive::RstRecord>& udaRecords)
     {
-        loadGroupRstUDA(record, wgIndex, groupNames,
-                        [control = record.control, &uda, &udaRecords]
-                        ([[maybe_unused]] const std::size_t phaseIdx,
-                         const std::string&                 group)
+        loadGroupRstUDA(record, wgIndex,
+                        [control = record.control,
+                         &groupNames, &uda, &udaRecords]
+                        (const std::size_t num_wg_elems,
+                         const int* const  localWgIndex)
         {
-            udaRecords.emplace_back(control, uda, group);
+            if (isFieldUDA(num_wg_elems, localWgIndex)) {
+                udaRecords.emplace_back(control, uda, "FIELD");
+            }
+            else {
+                udaRecords.emplace_back(control, uda, groupNames[localWgIndex[0] + 1]);
+            }
         });
     }
 
@@ -95,14 +105,20 @@ namespace {
                              const std::vector<std::string>&         groupNames,
                              std::vector<Opm::UDQActive::RstRecord>& udaRecords)
     {
-        loadGroupRstUDA(record, wgIndex, groupNames,
-                        [control = record.control, &uda, &igPhase, &udaRecords]
-                        (const std::size_t  phaseIdx,
-                         const std::string& group)
+        loadGroupRstUDA(record, wgIndex,
+                        [control = record.control,
+                         &groupNames, &igPhase,
+                         &uda, &udaRecords]
+                        (const std::size_t num_wg_elems,
+                         const int* const  localWgIndex)
         {
+            const auto& group = isFieldUDA(num_wg_elems, localWgIndex)
+                ? std::string { "FIELD" }
+                : groupNames[localWgIndex[0] + 1];
+
             const auto phase = (group == "FIELD")
                 ? igPhase.back()
-                : igPhase[phaseIdx];
+                : igPhase[localWgIndex[0]];
 
             udaRecords.emplace_back(control, uda, group, phase);
         });
@@ -120,12 +136,10 @@ Opm::UDQActive::OutputRecord::OutputRecord()
 
 Opm::UDQActive::OutputRecord::OutputRecord(const std::string& udq_arg,
                                            const std::size_t  input_index_arg,
-                                           const std::size_t  use_index_arg,
                                            const std::string& wgname_arg,
                                            const UDAControl   control_arg)
     : udq         { udq_arg }
     , input_index { input_index_arg }
-    , use_index   { use_index_arg }
     , control     { control_arg }
     , uda_code    { UDQ::udaCode(control_arg) }
     , use_count   { 1 }
@@ -136,7 +150,6 @@ bool Opm::UDQActive::OutputRecord::operator==(const OutputRecord& other) const
 {
     return (this->udq == other.udq)
         && (this->input_index == other.input_index)
-        && (this->use_index == other.use_index)
         && (this->wgname == other.wgname)
         && (this->control == other.control)
         && (this->uda_code == other.uda_code)
@@ -177,7 +190,7 @@ Opm::UDQActive Opm::UDQActive::serializationTestObject()
     UDQActive result;
 
     result.input_data = {{1, "test1", "test2", UDAControl::WCONPROD_ORAT}};
-    result.output_data = {{"test1", 1, 2, "test2", UDAControl::WCONPROD_ORAT}};
+    result.output_data = {{"test1", 1, "test2", UDAControl::WCONPROD_ORAT}};
 
     return result;
 }
@@ -220,8 +233,9 @@ Opm::UDQActive::operator bool() const
     return ! this->input_data.empty();
 }
 
-// We go through the current list of input records and compare with the supplied
-// arguments (uda, wgnamem, control).  There are seven possible outcomes:
+// We go through the current list of input records and compare with the
+// supplied arguments (uda, wgname, control).  There are seven possible
+// outcomes:
 //
 //   0. The uda variable is not defined (defaulted target/limit): fast return.
 //
@@ -376,33 +390,8 @@ void Opm::UDQActive::constructOutputRecords() const
             // Recall: Constructor gives use_count = 1 in this case.
             this->output_data.emplace_back(input_record.udq,
                                            input_record.input_index,
-                                           /* use_index = */ 0,
                                            input_record.wgname,
                                            input_record.control);
         }
     }
-
-    if (! this->output_data.empty()) {
-        // Recalculate IUAP start indices.
-        auto useIndex = std::size_t{0};
-
-        for (auto& record : this->output_data) {
-            record.use_index = useIndex;
-
-            useIndex += record.use_count;
-        }
-    }
-}
-
-// ===========================================================================
-// Additional free functions
-// ===========================================================================
-
-bool Opm::isFieldUDA(const UDQActive::OutputRecord& record)
-{
-    const auto kw = UDQ::keyword(record.control);
-
-    return ((kw == UDAKeyword::GCONPROD) ||
-            (kw == UDAKeyword::GCONINJE))
-        && (record.wg_name() == "FIELD");
 }

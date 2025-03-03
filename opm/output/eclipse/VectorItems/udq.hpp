@@ -26,18 +26,23 @@ namespace Opm::RestartIO::Helpers::VectorItems {
 
     namespace IUad {
         enum index : std::vector<int>::size_type {
-            UDACode  = 0, // Integer code for keyword/item combination.
-            UDQIndex = 1, // UDQ insertion index (one-based)
-            Kind     = 2, // UDA Kind.  1 => Regular, 2 => Field.
-            UseCount = 3, // Number of times this UDA is used in this
-                          // way--i.e., number of wells (or groups) for
-                          // which this UDA supplies this particular limit
-                          // in this particular keyword.
-            Offset   = 4, // One-based start offset in IUAP for this UDA.
+            UDACode    = 0, // Integer code for keyword/item combination.
+            UDQIndex   = 1, // UDQ insertion index (one-based)
+
+            NumIuapElm = 2, // Number of elements in IUAP for this UDA.  One
+                            // element for a regular group or well level
+                            // UDA, two elements for a FIELD level UDA.
+
+            UseCount   = 3, // Number of times this UDA is used in this
+                            // way--i.e., number of wells (or groups) for
+                            // which this UDA supplies this particular limit
+                            // in this particular keyword.
+
+            Offset     = 4, // One-based start offset in IUAP for this UDA.
         };
 
         namespace Value {
-            enum UDAKind : int {
+            enum IuapElems : int {
                 Regular = 1, // UDA applies to a well or a non-field group.
                 Field   = 2, // UDA applies to the field group.
             };

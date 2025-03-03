@@ -470,27 +470,30 @@ namespace {
     namespace iUad {
 
         template <class IUADArray>
-        void staticContrib(const Opm::UDQActive::OutputRecord& udq_record,
-                           const bool                          is_field_uda,
-                           IUADArray&                          iUad)
+        int staticContrib(const Opm::UDQActive::OutputRecord& iuad_record,
+                          const bool                          is_field_uda,
+                          const int                           iuap_offset,
+                          IUADArray&                          iUad)
         {
             namespace VI = Opm::RestartIO::Helpers::VectorItems::IUad;
 
             using Ix   = VI::index;;
-            using Kind = VI::Value::UDAKind;
+            using Kind = VI::Value::IuapElems;
 
-            iUad[Ix::UDACode] = udq_record.uda_code;
+            iUad[Ix::UDACode] = iuad_record.uda_code;
 
             // +1 for one-based indices.
-            iUad[Ix::UDQIndex] = udq_record.input_index + 1;
+            iUad[Ix::UDQIndex] = iuad_record.input_index + 1;
 
-            iUad[Ix::Kind] = is_field_uda
+            iUad[Ix::NumIuapElm] = is_field_uda
                 ? Kind::Field : Kind::Regular;
 
-            iUad[Ix::UseCount] = udq_record.use_count;
+            iUad[Ix::UseCount] = iuad_record.use_count;
 
             // +1 for one-based indices.
-            iUad[Ix::Offset] = udq_record.use_index + 1;
+            iUad[Ix::Offset] = iuap_offset + 1;
+
+            return iUad[Ix::UseCount] * iUad[Ix::NumIuapElm];
         }
 
     } // iUad
@@ -1129,11 +1132,19 @@ collectIUAD(const UDQActive& udqActive, const std::size_t expectNumIUAD)
     this->iUAD_.emplace(WV::NumWindows{ expectNumIUAD },
                         WV::WindowSize{ Opm::UDQDims::entriesPerIUAD() });
 
+    auto iuap_offset = 0;
     auto index = std::size_t{0};
     for (const auto& iuad_record : iuad_records) {
+        const auto kw = UDQ::keyword(iuad_record.control);
+        const auto is_field_uda =
+            ((kw == UDAKeyword::GCONPROD) ||
+             (kw == UDAKeyword::GCONINJE))
+            && (iuad_record.wg_name() == "FIELD");
+
         auto iuad = (*this->iUAD_)[index];
 
-        iUad::staticContrib(iuad_record, isFieldUDA(iuad_record), iuad);
+        iuap_offset +=
+            iUad::staticContrib(iuad_record, is_field_uda, iuap_offset, iuad);
 
         ++index;
     }
