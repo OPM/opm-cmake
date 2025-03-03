@@ -151,8 +151,10 @@ namespace {
     std::vector<std::unique_ptr<DeckKeyword>> parseKeywords(const std::string& deck_string, const UnitSystem& unit_system)
     {
         Parser parser;
+        parser.silent(true);
         std::string str {unit_system.deck_name() + "\n\n" + deck_string};
         auto deck = parser.parseString(str);
+        deck.remove_keywords(0, 1);
         std::vector<std::unique_ptr<DeckKeyword>> keywords;
         for (auto &keyword : deck) {
             keywords.push_back(std::make_unique<DeckKeyword>(keyword));
