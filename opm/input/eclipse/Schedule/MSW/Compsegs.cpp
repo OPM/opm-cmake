@@ -227,7 +227,7 @@ namespace {
                 parseContext.handleError(ParseContext::SCHEDULE_COMPSEGS_NOT_SUPPORTED, msg_fmt, location, errors);
             }
 
-            if (distance_end <= distance_start) {
+            if (distance_end < distance_start) {
                 std::string msg_fmt = fmt::format("Problems with {{keyword}}\n"
                                                   "In {{file}} line {{line}}\n"
                                                   "The end of the perforation must be below the start for well {} connection({},{},{})", well_name, I+1, J+1, K+1);
