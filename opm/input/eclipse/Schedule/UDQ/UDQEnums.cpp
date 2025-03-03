@@ -620,6 +620,7 @@ UDAKeyword keyword(const UDAControl control)
         {UDAControl::GCONPROD_WATER_TARGET,  UDAKeyword::GCONPROD},
         {UDAControl::GCONPROD_GAS_TARGET,    UDAKeyword::GCONPROD},
         {UDAControl::GCONPROD_LIQUID_TARGET, UDAKeyword::GCONPROD},
+        {UDAControl::GCONPROD_RESV_TARGET,   UDAKeyword::GCONPROD},
 
         // --------------------------------------------------------------
         {UDAControl::GCONINJE_SURFACE_MAX_RATE,      UDAKeyword::GCONINJE},
@@ -654,6 +655,7 @@ int udaCode(const UDAControl control)
         {UDAControl::GCONPROD_WATER_TARGET,  300'019},
         {UDAControl::GCONPROD_GAS_TARGET,    400'019},
         {UDAControl::GCONPROD_LIQUID_TARGET, 500'019},
+        {UDAControl::GCONPROD_RESV_TARGET,   1'300'020},
 
         // --------------------------------------------------------------
         {UDAControl::GCONINJE_SURFACE_MAX_RATE,      300'017}, // Surface injection rate
@@ -767,6 +769,7 @@ UDAControl udaControl(const int uda_code)
     case   300'019: return UDAControl::GCONPROD_WATER_TARGET;
     case   400'019: return UDAControl::GCONPROD_GAS_TARGET;
     case   500'019: return UDAControl::GCONPROD_LIQUID_TARGET;
+    case   1'300'020: return UDAControl::GCONPROD_RESV_TARGET;
 
     case   300'017: return UDAControl::GCONINJE_SURFACE_MAX_RATE;
     case   400'017: return UDAControl::GCONINJE_RESV_MAX_RATE;
@@ -802,6 +805,9 @@ std::string controlName(const UDAControl control)
 
     case UDAControl::GCONPROD_LIQUID_TARGET:
         return "GCONPROD_LRAT";
+
+    case UDAControl::GCONPROD_RESV_TARGET:
+        return "GCONPROD_RESV";
 
     case UDAControl::GCONINJE_SURFACE_MAX_RATE:
         return "GCONINJE_SURFACE_RATE";

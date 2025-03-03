@@ -82,7 +82,7 @@
     {
       "item": 14,
       "name": "RESERVOIR_FLUID_TARGET",
-      "value_type": "DOUBLE",
+      "value_type": "UDA",
       "dimension": "ReservoirVolume/Time"
     },
     {

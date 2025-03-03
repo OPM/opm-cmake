@@ -200,7 +200,7 @@ void handleGCONPROD(HandlerContext& handlerContext)
         const auto gas_target = record.getItem("GAS_TARGET").get<UDAValue>(0);
         const auto water_target = record.getItem("WATER_TARGET").get<UDAValue>(0);
         const auto liquid_target = record.getItem("LIQUID_TARGET").get<UDAValue>(0);
-        const auto resv_target = record.getItem("RESERVOIR_FLUID_TARGET").getSIDouble(0);
+        const auto resv_target = record.getItem("RESERVOIR_FLUID_TARGET").get<UDAValue>(0);
 
         const bool apply_default_oil_target = record.getItem("OIL_TARGET").defaultApplied(0);
         const bool apply_default_gas_target = record.getItem("GAS_TARGET").defaultApplied(0);

@@ -946,6 +946,12 @@ void assignGroupProductionTargets(const Opm::Group&        group,
         sGrp[Ix::LiqRateLimit] = sgprop(M::liquid_surface_rate, cntl.liquid_target);
         sGrp[Ix::LiqRateLimit_2] = sGrp[Ix::LiqRateLimit];  // LRAT control
     }
+
+    if (prop.resv_target.is_numeric() || (cntl.resv_target > 0.0))
+    {
+        sGrp[Ix::ResvRateLimit] = sgprop(M::rate, cntl.resv_target);
+        sGrp[Ix::ResvRateLimit_2] = sGrp[Ix::ResvRateLimit];  // RESV control
+    }
 }
 
 // Compatibility shim for restart output of gas-lift rates and limits.  The
