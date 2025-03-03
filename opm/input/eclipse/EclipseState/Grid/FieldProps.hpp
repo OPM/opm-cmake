@@ -768,7 +768,8 @@ private:
     region_index(const std::string& region_name, int region_value);
 
     void handle_OPERATE(const DeckKeyword& keyword, Box box);
-    void handle_operation(Section section, const DeckKeyword& keyword, Box box);
+    void handle_operation(Section section, const DeckKeyword& keyword, Box box,
+                          const bool onlyACTNUM = false);
     void handle_operateR(const DeckKeyword& keyword);
     void handle_region_operation(const DeckKeyword& keyword);
     void handle_COPY(const DeckKeyword& keyword, Box box, bool region);
@@ -779,7 +780,8 @@ private:
     double get_beta(const std::string& func_name, const std::string& target_array, double raw_beta);
     double get_alpha(const std::string& func_name, const std::string& target_array, double raw_alpha);
 
-    void handle_keyword(Section section, const DeckKeyword& keyword, Box& box);
+    void handle_keyword(Section section, const DeckKeyword& keyword, Box& box,
+                        const bool onlyACTNUM = false);
     void handle_double_keyword(Section section,
                                const Fieldprops::keywords::keyword_info<double>& kw_info,
                                const DeckKeyword& keyword,
