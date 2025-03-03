@@ -2321,15 +2321,35 @@ namespace {
                 this->snapshots.back().guide_rate.update(std::move(new_config));
             }
             if (group.isInjectionGroup()) {
-                // Set name of VREP group if different than default
+                // Set name of VREP group if different from default.
+                //
+                // Special case handling of FIELD since the insert_index()
+                // differs from the voidage_group_index for this group.
                 if (static_cast<int>(group.insert_index()) != rst_group.voidage_group_index) {
+                    auto groupNamePos = rst_group_names.find(rst_group.voidage_group_index);
+                    if (groupNamePos == rst_group_names.end()) {
+                        if ((rst_group.voidage_group_index == rst_state.header.max_groups_in_field)
+                            && (group.name() == "FIELD"))
+                        {
+                            // Special case handling for the FIELD group.
+                            // Voidage_group_index == max_groups_in_field is
+                            // the restart file representation of FIELD.
+                            continue;
+                        }
+                        else {
+                            throw std::runtime_error {
+                                fmt::format("{} group's reinjection group is unknown", group.name())
+                            };
+                        }
+                    }
+
                     for (const auto& [phase, orig_inj_prop] : group.injectionProperties()) {
                         Group::GroupInjectionProperties inj_prop(orig_inj_prop);
-                        inj_prop.voidage_group = rst_group_names[rst_group.voidage_group_index];
+                        inj_prop.voidage_group = groupNamePos->second;
                         group.updateInjection(inj_prop);
                     }
                 }
-             }
+            }
         }
 
         this->snapshots.back().udq.update( UDQConfig(this->m_static.m_runspec.udqParams(), rst_state) );

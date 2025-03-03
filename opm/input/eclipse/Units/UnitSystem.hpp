@@ -22,6 +22,8 @@
 
 #include <opm/input/eclipse/Units/Dimension.hpp>
 
+#include <opm/input/eclipse/EclipseState/Phase.hpp>
+
 #include <opm/input/eclipse/Schedule/UDQ/UDQEnums.hpp>
 
 #include <map>
@@ -108,6 +110,7 @@ namespace Opm {
         const Dimension& getDimension(const std::string& dimension) const;
         Dimension getDimension(measure m) const;
         Dimension uda_dim(UDAControl control) const;
+        Dimension uda_dim(UDAControl control, const Phase phase) const;
 
         bool hasDimension(const std::string& dimension) const;
         bool equal(const UnitSystem& other) const;

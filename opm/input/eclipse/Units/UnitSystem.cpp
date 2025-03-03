@@ -20,6 +20,9 @@
 #include <opm/input/eclipse/Units/UnitSystem.hpp>
 
 #include <opm/common/utility/String.hpp>
+
+#include <opm/input/eclipse/EclipseState/Phase.hpp>
+
 #include <opm/input/eclipse/Units/Dimension.hpp>
 #include <opm/input/eclipse/Units/Units.hpp>
 
@@ -1490,8 +1493,8 @@ namespace {
         return Dimension(si_factor, si_offset);
     }
 
-
-    Dimension UnitSystem::uda_dim(const UDAControl control) const {
+    Dimension UnitSystem::uda_dim(const UDAControl control) const
+    {
         switch (control) {
         case UDAControl::WCONPROD_ORAT:  case UDAControl::WELTARG_ORAT:
         case UDAControl::WCONPROD_WRAT:  case UDAControl::WELTARG_WRAT:
@@ -1521,8 +1524,6 @@ namespace {
 
         case UDAControl::GCONINJE_TARGET_REINJ_FRACTION:
         case UDAControl::GCONINJE_TARGET_VOID_FRACTION:
-        case UDAControl::GCONINJE_SURFACE_MAX_RATE:
-        case UDAControl::WCONINJE_RATE:
             return this->getDimension(UnitSystem::measure::identity);
 
         default:
@@ -1532,6 +1533,52 @@ namespace {
         }
     }
 
+    Dimension UnitSystem::uda_dim(const UDAControl control,
+                                  const Phase      phase) const
+    {
+        switch (control) {
+        case UDAControl::WCONPROD_ORAT:  case UDAControl::WELTARG_ORAT:
+        case UDAControl::WCONPROD_WRAT:  case UDAControl::WELTARG_WRAT:
+        case UDAControl::WCONPROD_LRAT:  case UDAControl::WELTARG_LRAT:
+        case UDAControl::GCONPROD_OIL_TARGET:
+        case UDAControl::GCONPROD_WATER_TARGET:
+        case UDAControl::GCONPROD_LIQUID_TARGET:
+            return this->getDimension(measure::liquid_surface_rate);
+
+        case UDAControl::WCONINJE_RESV:
+        case UDAControl::WCONPROD_RESV:
+        case UDAControl::WELTARG_RESV:
+        case UDAControl::GCONINJE_RESV_MAX_RATE:
+            return this->getDimension(measure::geometric_volume_rate);
+
+        case UDAControl::WCONPROD_GRAT:
+        case UDAControl::WELTARG_GRAT:
+        case UDAControl::GCONPROD_GAS_TARGET:
+        case UDAControl::WCONPROD_LIFT:   // @TODO@ Get this working also for ALQ types other than GRAT
+        case UDAControl::WELTARG_LIFT:
+            return this->getDimension(measure::gas_surface_rate);
+
+        case UDAControl::WCONPROD_BHP:  case UDAControl::WCONPROD_THP:
+        case UDAControl::WCONINJE_BHP:  case UDAControl::WCONINJE_THP:
+        case UDAControl::WELTARG_BHP:   case UDAControl::WELTARG_THP:
+            return this->getDimension(measure::pressure);
+
+        case UDAControl::GCONINJE_SURFACE_MAX_RATE:
+        case UDAControl::WCONINJE_RATE:
+            return (phase == Phase::GAS)
+                ? this->getDimension(measure::gas_surface_rate)
+                : this->getDimension(measure::liquid_surface_rate);
+
+        case UDAControl::GCONINJE_TARGET_REINJ_FRACTION:
+        case UDAControl::GCONINJE_TARGET_VOID_FRACTION:
+            return this->getDimension(measure::identity);
+
+        default:
+            throw std::logic_error {
+                "No dimension for UDA control '" + UDQ::controlName(control) + '\''
+            };
+        }
+    }
 
     std::size_t UnitSystem::use_count() const {
         return this->m_use_count;
