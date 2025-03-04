@@ -41,11 +41,13 @@ namespace Opm { namespace RestartIO { namespace Helpers { namespace VectorItems 
             LiqRateLimit  =  9, // Group's liquid production target/limit
 
             GLOMaxSupply  = 34, // Group's maximum supply of lift gas
+            ResvRateLimit = 35, // Group's maximum reservoir volume production rate target/limit
 
             GasRateLimit_2 = 39, // Copy of group's gas production target/limit
             OilRateLimit_2 = 52, // Copy of group's oil production target/limit
             WatRateLimit_2 = 53, // Copy of group's water production target/limit
             LiqRateLimit_2 = 54, // Copy of group's liquid production target/limit
+            ResvRateLimit_2 = 55, // Copy of group's maximum reservoir volume production rate target/limit
 
             GLOMaxRate    = 91, // Group's maximum lift gas rate
         };

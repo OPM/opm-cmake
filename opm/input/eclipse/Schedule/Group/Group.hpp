@@ -226,7 +226,7 @@ public:
         UDAValue liquid_target;
         double guide_rate = 0;
         GuideRateProdTarget guide_rate_def = GuideRateProdTarget::NO_GUIDE_RATE;
-        double resv_target = 0;
+        UDAValue resv_target;
         bool available_group_control = true;
         static GroupProductionProperties serializationTestObject();
 

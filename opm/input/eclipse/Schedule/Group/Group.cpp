@@ -46,12 +46,14 @@ namespace {
             , gas { is_defined(rst_group.gas_rate_limit)    }
             , wat { is_defined(rst_group.water_rate_limit)  }
             , liq { is_defined(rst_group.liquid_rate_limit) }
+            , resv { is_defined(rst_group.resv_rate_limit) }
         {}
 
         bool oil { false };
         bool gas { false };
         bool wat { false };
         bool liq { false };
+        bool resv { false };
     };
 
     struct GasInjectionLimits
@@ -105,7 +107,7 @@ namespace {
 
     bool has_active(const ProductionLimits& limits)
     {
-        return limits.oil || limits.gas || limits.wat || limits.liq;
+        return limits.oil || limits.gas || limits.wat || limits.liq || limits.resv;
     }
 
     bool has_active(const GasInjectionLimits& limits)
@@ -134,6 +136,7 @@ namespace {
         update_if_defined(production.gas_target, rst_group.gas_rate_limit);
         update_if_defined(production.water_target, rst_group.water_rate_limit);
         update_if_defined(production.liquid_target, rst_group.liquid_rate_limit);
+        update_if_defined(production.resv_target, rst_group.resv_rate_limit);
 
         production.cmode = Opm::Group::ProductionCModeFromInt(rst_group.prod_cmode);
         production.group_limit_action.allRates = Opm::Group::ExceedActionFromInt(rst_group.exceed_action);
@@ -152,6 +155,9 @@ namespace {
 
         if (active.liq)
             production.production_controls += static_cast<int>(Opm::Group::ProductionCMode::LRAT);
+
+        if (active.resv)
+            production.production_controls += static_cast<int>(Opm::Group::ProductionCMode::RESV);
 
         return production;
     }
@@ -488,7 +494,8 @@ Group::GroupProductionProperties::GroupProductionProperties(const UnitSystem& un
     oil_target(unit_system.getDimension(UnitSystem::measure::liquid_surface_rate)),
     water_target(unit_system.getDimension(UnitSystem::measure::liquid_surface_rate)),
     gas_target(unit_system.getDimension(UnitSystem::measure::gas_surface_rate)),
-    liquid_target(unit_system.getDimension(UnitSystem::measure::liquid_surface_rate))
+    liquid_target(unit_system.getDimension(UnitSystem::measure::liquid_surface_rate)),
+    resv_target(unit_system.getDimension(UnitSystem::measure::rate))
 {
 }
 
@@ -504,7 +511,7 @@ Group::GroupProductionProperties Group::GroupProductionProperties::serialization
     result.liquid_target = UDAValue(4.0);
     result.guide_rate = 5.0;
     result.guide_rate_def = GuideRateProdTarget::COMB;
-    result.resv_target = 6.0;
+    result.resv_target = UDAValue(6.0);
     result.production_controls = 7;
 
     return result;
@@ -534,6 +541,7 @@ bool Group::GroupProductionProperties::updateUDQActive(const UDQConfig& udq_conf
     update_count += active.update(udq_config, this->water_target, this->name, UDAControl::GCONPROD_WATER_TARGET);
     update_count += active.update(udq_config, this->gas_target, this->name, UDAControl::GCONPROD_GAS_TARGET);
     update_count += active.update(udq_config, this->liquid_target, this->name, UDAControl::GCONPROD_LIQUID_TARGET);
+    update_count += active.update(udq_config, this->resv_target, this->name, UDAControl::GCONPROD_RESV_TARGET);
 
     return (update_count > 0);
 }
@@ -558,6 +566,11 @@ void Group::GroupProductionProperties::update_uda(const UDQConfig& udq_config, U
     case UDAControl::GCONPROD_LIQUID_TARGET:
         this->liquid_target = value;
         udq_active.update(udq_config, this->liquid_target, this->name, UDAControl::GCONPROD_LIQUID_TARGET);
+        break;
+
+    case UDAControl::GCONPROD_RESV_TARGET:
+        this->resv_target = value;
+        udq_active.update(udq_config, this->resv_target, this->name, UDAControl::GCONPROD_RESV_TARGET);
         break;
 
     default:
@@ -769,7 +782,7 @@ Group::ProductionControls Group::productionControls(const SummaryState& st) cons
     pc.liquid_target = UDA::eval_group_uda(this->production_properties.liquid_target, this->m_name, st, this->udq_undefined);
     pc.guide_rate = this->production_properties.guide_rate;
     pc.guide_rate_def = this->production_properties.guide_rate_def;
-    pc.resv_target = this->production_properties.resv_target;
+    pc.resv_target = UDA::eval_group_uda(this->production_properties.resv_target, this->m_name, st, this->udq_undefined);
 
     return pc;
 }
