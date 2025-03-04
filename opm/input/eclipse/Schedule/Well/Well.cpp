@@ -466,12 +466,31 @@ Well::Well(const RestartIO::RstWell& rst_well,
 
         this->updateInjection(std::move(i));
 
+        const auto isTemp = (rst_well.inj_temperature < RestartIO::RstWell::UNDEFINED_VALUE);
+        std::size_t tracer_conc_index = 0;
+        if (isTemp) {
+            this->well_inj_temperature = rst_well.inj_temperature;
+            ++tracer_conc_index;
+        }
+
         if (!rst_well.tracer_concentration_injection.empty()) {
             auto tracer = std::make_shared<WellTracerProperties>(this->getTracerProperties());
-            for (std::size_t tracer_index = 0; tracer_index < tracer_config.size(); tracer_index++) {
+            for (std::size_t tracer_index = 0; tracer_index < tracer_config.size(); ++tracer_index) {
                 const auto& tname = tracer_config[tracer_index].name;
-                const auto concentration = rst_well.tracer_concentration_injection[tracer_index];
-                tracer->setConcentration(tname, concentration);
+                const auto phase = tracer_config[tracer_index].phase;
+                if (phase == Phase::WATER) {
+                    const auto concentration = rst_well.tracer_concentration_injection[tracer_conc_index];
+                    tracer->setConcentration(tname, concentration);
+                } else {
+                    const auto free_conc = rst_well.tracer_concentration_injection[tracer_conc_index];
+                    const auto sol_conc = rst_well.tracer_concentration_injection[++tracer_conc_index];
+                    if (WellType::gas_injector(this->wtype.ecl_wtype()) || WellType::oil_injector(this->wtype.ecl_wtype())) {
+                        tracer->setConcentration(tname, free_conc);
+                        if (sol_conc > 0.0) {
+                            OpmLog::warning(fmt::format("Well {}: Restoring a non-zero solution concentration of tracer {} is not yet supported.", rst_well.name, tname));
+                        }
+                    }
+                }
             }
             this->updateTracer(tracer);
         }

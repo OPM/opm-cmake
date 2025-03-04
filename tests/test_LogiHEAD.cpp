@@ -33,9 +33,10 @@ BOOST_AUTO_TEST_CASE(Radial_Settings_and_Init)
     const auto e300_radial = false;
     const auto e100_radial = true;
     const auto enableHyster = true;
+    const auto isTemp = false;
 
     const auto lh = Opm::RestartIO::LogiHEAD{}
-        .variousParam(e300_radial, e100_radial, 4, enableHyster);
+        .variousParam(e300_radial, e100_radial, 4, enableHyster, isTemp);
 
     const auto& v = lh.data();
 

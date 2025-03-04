@@ -680,7 +680,8 @@ Opm::RestartIO::InteHEAD::tuningParam(const TuningPar& tunpar)
 
 Opm::RestartIO::InteHEAD&
 Opm::RestartIO::InteHEAD::variousParam(const int version,
-                                       const int iprog)
+                                       const int iprog,
+                                       const int num_tracer_comps)
 {
     this->data_[VERSION] = version;
     this->data_[IPROG]   = iprog;
@@ -702,6 +703,8 @@ Opm::RestartIO::InteHEAD::variousParam(const int version,
     // ih_200: Usage unknown, value fixed across reference cases.
     this->data_[ih_200] = 1;
 
+    // NSTRA2  = 240
+    this->data_[NSTRA2] = 1 + (num_tracer_comps > 0) + num_tracer_comps;
     return *this;
 }
 

@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(Tuning_param)
 BOOST_AUTO_TEST_CASE(Various_Parameters)
 {
     const auto ih = Opm::RestartIO::InteHEAD{}
-        .variousParam(2015, 100);
+        .variousParam(2015, 100, 0);
 
     const auto& v = ih.data();
 
@@ -634,6 +634,7 @@ BOOST_AUTO_TEST_CASE(TestHeader)
     const auto mxwpit	= 6;
     const auto version = 2015;
     const auto iprog = 100;
+    const auto ntracers = 0;
     const auto nsegwl = 3;
     const auto nswlmx = 4;
     const auto nsegmx = 5;
@@ -667,7 +668,7 @@ BOOST_AUTO_TEST_CASE(TestHeader)
          .aquiferDimensions(aqudims)
          .stepParam(tstep, report_step)
          .tuningParam({newtmx, newtmn, litmax, litmin, mxwsit, mxwpit, 0})
-         .variousParam(version, iprog)
+         .variousParam(version, iprog, ntracers)
          .wellSegDimensions({nsegwl, nswlmx, nsegmx, nlbrmx, nisegz, nrsegz, nilbrz})
          .regionDimensions({ntfip, nmfipr, 0,0,0})
          .ngroups({ngroup});

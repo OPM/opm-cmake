@@ -22,6 +22,7 @@
 
 #include <opm/output/eclipse/InteHEAD.hpp>
 #include <opm/output/eclipse/VectorItems/intehead.hpp>
+#include <opm/output/eclipse/VectorItems/well.hpp>
 
 #include <opm/input/eclipse/EclipseState/Aquifer/AquiferConfig.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
@@ -265,7 +266,7 @@ namespace {
     std::array<int, 4>
     getNGRPZ(const int             grpsz,
              const int             ngrp,
-             const int             num_water_tracer,
+             const int             num_tracers,
              const ::Opm::Runspec& rspec)
     {
         const auto& wd = rspec.wellDimensions();
@@ -275,7 +276,7 @@ namespace {
 
         const int nigrpz = 97 + std::max(nwgmax, ngmax);
         const int nsgrpz = 112;
-        const int nxgrpz = 180 + 4*num_water_tracer;
+        const int nxgrpz = 180 + 4*num_tracers + 1;  // +1 since late 2022
         const int nzgrpz = 5;
 
         return {{
@@ -360,7 +361,7 @@ namespace {
 
 
     Opm::RestartIO::InteHEAD::WellSegDims
-    getWellSegDims(const int              num_water_tracer,
+    getWellSegDims(const int              num_tracers,
                    const ::Opm::Runspec&  rspec,
                    const ::Opm::Schedule& sched,
                    const std::size_t      report_step,
@@ -379,7 +380,7 @@ namespace {
             std::max(maxNumBr, wsd.maxLateralBranchesPerWell()),
             22,           // Number of entries per segment in ISEG (2017.2)
             Opm::RestartIO::InteHEAD::numRsegElem(rspec.phases())
-               + 8*num_water_tracer, // Number of entries per segment in RSEG
+               + 8*num_tracers, // Number of entries per segment in RSEG
             10            // Number of entries per segment in ILBR (2017.2)
         };
     }
@@ -573,8 +574,11 @@ createInteHead(const EclipseState& es,
     const auto& tdim  = es.getTableManager();
     const auto& rdim  = tdim.getRegdims();
     const auto& rckcfg = es.getSimulationConfig().rock_config();
-    auto num_water_tracer = es.runspec().tracers().water_tracers();
-    int nxwelz_tracer_shift = num_water_tracer*5 + 2 * (num_water_tracer > 0);
+    const auto& tracers = es.runspec().tracers();
+    // TEMP is a tracer, oil&gas tracers have both free and solution parts.
+    const auto num_tracers = tracers.water_tracers() + tracers.oil_tracers() + tracers.gas_tracers() + (es.runspec().temp() ? 1 : 0);
+    const auto num_tracer_comps = num_tracers + tracers.oil_tracers() + tracers.gas_tracers();
+    int nxwelz_tracer_shift = num_tracer_comps*5 + 2 * (num_tracers > 0);
 
     const auto ih = InteHEAD{}
         .dimensions         (grid.getNXYZ())
@@ -588,18 +592,18 @@ createInteHead(const EclipseState& es,
              // across a range of reference cases, but are not guaranteed to be
              // universally valid.
         .drsdt(sched, lookup_step)
-        .params_NWELZ       (155 + num_water_tracer, 122 + 2*num_water_tracer, 130 + nxwelz_tracer_shift, 3) // n{isxz}welz: number of data elements per well in {ISXZ}WELL
-        .params_NCON        (25, 41, 58 + 5*num_water_tracer)       // n{isx}conz: number of data elements per completion in ICON
-        .params_GRPZ        (getNGRPZ(nwgmax, ngmax, num_water_tracer, rspec))
+        .params_NWELZ       (155 + num_tracers, 122 + 2 * num_tracer_comps, VectorItems::XWell::index::TracerOffset + nxwelz_tracer_shift, 3) // n{isxz}welz: number of data elements per well in {ISXZ}WELL
+        .params_NCON        (25, 41, 58 + 5*num_tracer_comps)       // n{isx}conz: number of data elements per completion in ICON
+        .params_GRPZ        (getNGRPZ(nwgmax, ngmax, num_tracer_comps, rspec))
         .aquiferDimensions  (inferAquiferDimensions(es, sched[lookup_step]))
         .stepParam          (num_solver_steps, report_step)
         .tuningParam        (getTuningPars(sched[lookup_step].tuning()))
         .liftOptParam       (getLiftOptPar(sched, report_step, lookup_step))
-        .wellSegDimensions  (getWellSegDims(num_water_tracer, rspec, sched, report_step, lookup_step))
+        .wellSegDimensions  (getWellSegDims(num_tracer_comps, rspec, sched, report_step, lookup_step))
         .regionDimensions   (getRegDims(tdim, rdim))
         .ngroups            ({ ngmax })
         .params_NGCTRL      (GroupControl(sched, report_step, lookup_step))
-        .variousParam       (201802, 100)  // Output should be compatible with Eclipse 100, 2017.02 version.
+        .variousParam       (201802, 100, num_tracer_comps)  // Output should be compatible with Eclipse 100, 2022.04 version.
         .udqParam_1         (getUdqParam(rspec, sched, report_step, lookup_step))
         .actionParam        (getActionParam(rspec, acts, report_step))
         .variousUDQ_ACTIONXParam()

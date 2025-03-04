@@ -534,6 +534,7 @@ namespace {
                               OutputVectorInt                 writeVectorI)
     {
         for (const auto& vector : vectors) {
+            if (vector=="TEMP") continue;  // Write this together with the tracers
             value.solution.at(vector).visit(VisitorOverloadSet{
                 MonoThrowHandler<std::logic_error>(fmt::format("{} does not have an associate value", vector)),
                 [&vector,&writeVectorF](const std::vector<double>& v)
@@ -647,6 +648,16 @@ namespace {
                             EclIO::OutputStream::Restart& rstFile)
     {
         for (const auto& [tracer_rst_name, vector] : value.solution) {
+            if (tracer_rst_name == "TEMP") {
+                std::vector<std::string> zatracer;
+                zatracer.push_back("TEMP");
+                zatracer.push_back(unit_system.name(UnitSystem::measure::temperature));
+                rstFile.write("ZATRACER", zatracer);
+                const auto& data = vector.data<double>();
+                rstFile.write("TEMP", std::vector<float> {data.begin(), data.end()});
+                continue;
+            }
+
             if (vector.target != data::TargetType::RESTART_TRACER_SOLUTION)
                 continue;
 

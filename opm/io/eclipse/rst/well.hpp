@@ -129,6 +129,7 @@ struct RstWell
     float dfac_corr_coeff_a{};
     float dfac_corr_exponent_b{};
     float dfac_corr_exponent_c{};
+    float inj_temperature{UNDEFINED_VALUE};
     std::vector<float> tracer_concentration_injection;
 
     double oil_rate;

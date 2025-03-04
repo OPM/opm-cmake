@@ -1080,14 +1080,22 @@ namespace {
         void assignTracerData(const Opm::TracerConfig& tracers,
                               const Opm::SummaryState& smry,
                               const std::string&       wname,
-                              SWellArray&              sWell)
+                              SWellArray&              sWell,
+                              const bool               isTemp = false)
         {
             auto output_index = static_cast<std::size_t>(VI::SWell::index::TracerOffset);
+            // Temperature tracer is first, if present
+            if (isTemp) sWell[output_index++] = smry.get_well_var(wname, "WTICHEA", 0.0);
 
             for (const auto& tracer : tracers) {
                 if (tracer.phase == Opm::Phase::WATER) {
                     sWell[output_index++] =
                         smry.get_well_var(wname, fmt::format("WTIC{}", tracer.name), 0.0);
+                } else {
+                    sWell[output_index++] =
+                        smry.get_well_var(wname, fmt::format("WTICF{}", tracer.name), 0.0);
+                    sWell[output_index++] =
+                        smry.get_well_var(wname, fmt::format("WTICS{}", tracer.name), 0.0);
                 }
             }
         }
@@ -1133,7 +1141,8 @@ namespace {
             assignDFactorCorrelation(well, units, sWell);
             assignEconomicLimits(well, swprop, sWell);
             assignWellTest(well.name(), sched, wtest_state, sim_step, swprop, sWell);
-            assignTracerData(tracers, smry, well.name(), sWell);
+
+            assignTracerData(tracers, smry, well.name(), sWell, sched.runspec().temp());
             assignBhpVfpAdjustment(well, swprop, sWell);
         }
     } // SWell
@@ -1340,7 +1349,8 @@ namespace {
                               const Opm::Tracers& tracer_dims,
                               const Opm::SummaryState& smry,
                               const Opm::Well& well,
-                              XWellArray& xWell)
+                              XWellArray& xWell,
+                              const bool isTemp)
         {
             if (tracers.empty() || tracer_dims.water_tracers() == 0)
                 return;
@@ -1348,55 +1358,73 @@ namespace {
             using Ix = ::Opm::RestartIO::Helpers::VectorItems::XWell::index;
             std::fill(xWell.begin() + Ix::TracerOffset, xWell.end(), 0);
 
+            // For each vector in rate, prod_total, inj_total, inj_conc, prod_conc:
+            //    TEMP (if present), then each tracer in definition order (TRACER) [free then solution conc for HC tracers]
 
-            for (std::size_t tracer_index=0; tracer_index < tracers.size(); tracer_index++) {
-                const auto& tracer = tracers[tracer_index];
-                std::size_t output_index = Ix::TracerOffset + tracer_index;
-                if (well.isInjector()) {
-                    const auto& wtir = smry.get_well_var(well.name(), fmt::format("WTIR{}", tracer.name), 0);
-                    xWell[output_index] = -wtir;
+            auto output_index = static_cast<std::size_t>(Ix::TracerOffset);
+            // Rates
+            if (well.isInjector()) {
+                if (isTemp) xWell[output_index++] = -smry.get_well_var(well.name(), "WTIRHEA", 0);
+                for (const auto& tracer : tracers) {
+                    if (tracer.phase == Opm::Phase::WATER) {
+                        xWell[output_index++] = -smry.get_well_var(well.name(), fmt::format("WTIR{}", tracer.name), 0);
+                    } else {
+                        xWell[output_index++] = -smry.get_well_var(well.name(), fmt::format("WTIRF{}", tracer.name), 0);
+                        xWell[output_index++] = -smry.get_well_var(well.name(), fmt::format("WTIRS{}", tracer.name), 0);
+                    }
+                }
+            } else {
+                if (isTemp) xWell[output_index++] = smry.get_well_var(well.name(), "WTPRHEA", 0);
+                for (const auto& tracer : tracers) {
+                    if (tracer.phase == Opm::Phase::WATER) {
+                        xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPR{}", tracer.name), 0);
+                    } else {
+                        xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPRF{}", tracer.name), 0);
+                        xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPRS{}", tracer.name), 0);
+                    }
+                }
+            }
+
+            // Production totals
+            if (isTemp) xWell[output_index++] = smry.get_well_var(well.name(), "WTPTHEA", 0);
+            for (const auto& tracer : tracers) {
+                if (tracer.phase == Opm::Phase::WATER) {
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPT{}", tracer.name), 0);
                 } else {
-                    const auto& wtpr = smry.get_well_var(well.name(), fmt::format("WTPR{}", tracer.name), 0);
-                    xWell[output_index] = wtpr;
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPTF{}", tracer.name), 0);
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTPTS{}", tracer.name), 0);
                 }
             }
 
-
-            for (std::size_t tracer_index=0; tracer_index < tracers.size(); tracer_index++) {
-                const auto& tracer = tracers[tracer_index];
-                std::size_t output_index = Ix::TracerOffset + tracer_dims.water_tracers() + tracer_index;
-                if (well.isProducer()) {
-                    const auto& wtpr = smry.get_well_var(well.name(), fmt::format("WTPT{}", tracer.name), 0);
-                    xWell[output_index] = wtpr;
+            // Injection totals
+            if (isTemp) xWell[output_index++] = smry.get_well_var(well.name(), "WTITHEA", 0);
+            for (const auto& tracer : tracers) {
+                if (tracer.phase == Opm::Phase::WATER) {
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTIT{}", tracer.name), 0);
+                } else {
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTITF{}", tracer.name), 0);
+                    xWell[output_index++] = smry.get_well_var(well.name(), fmt::format("WTITS{}", tracer.name), 0);
                 }
             }
 
-            for (std::size_t tracer_index=0; tracer_index < tracers.size(); tracer_index++) {
-                const auto& tracer = tracers[tracer_index];
-                std::size_t output_index = Ix::TracerOffset + 2*tracer_dims.water_tracers() + tracer_index;
-                if (well.isInjector()) {
-                    const auto& wtir = smry.get_well_var(well.name(), fmt::format("WTIT{}", tracer.name), 0);
-                    xWell[output_index] = wtir;
+            // inj and prod conc
+            const bool injector = well.isInjector();
+            for (std::size_t n=0; n < 2; ++n) {
+                if (isTemp) {
+                        xWell[output_index++] = injector ? smry.get_well_var(well.name(), "WTICHEA", 0) : smry.get_well_var(well.name(), "WTPCHEA", 0);
+                }
+                for (const auto& tracer : tracers) {
+                    if (tracer.phase == Opm::Phase::WATER) {
+                        xWell[output_index++] = injector ? smry.get_well_var(well.name(), fmt::format("WTIC{}", tracer.name), 0) : smry.get_well_var(well.name(), fmt::format("WTPC{}", tracer.name), 0);
+                    } else {
+                        xWell[output_index++] = injector ? smry.get_well_var(well.name(), fmt::format("WTICF{}", tracer.name), 0) : smry.get_well_var(well.name(), fmt::format("WTPCF{}", tracer.name), 0);
+                        xWell[output_index++] = injector ? smry.get_well_var(well.name(), fmt::format("WTICS{}", tracer.name), 0) : smry.get_well_var(well.name(), fmt::format("WTPCS{}", tracer.name), 0);
+                    }
                 }
             }
 
-            for (std::size_t n=0; n < 2; n++) {
-                for (std::size_t tracer_index=0; tracer_index < tracers.size(); tracer_index++) {
-                    const auto& tracer = tracers[tracer_index];
-                    std::size_t output_index = Ix::TracerOffset + (3 + n)*tracer_dims.water_tracers() + tracer_index;
-                    const auto& wtic = smry.get_well_var(well.name(), fmt::format("WTIC{}", tracer.name), 0);
-                    const auto& wtpc = smry.get_well_var(well.name(), fmt::format("WTPC{}", tracer.name), 0);
-
-                    if (std::abs(wtic) > 0)
-                        xWell[output_index] = wtic;
-                    else
-                        xWell[output_index] = wtpc;
-                }
-            }
-
-            std::size_t output_index = Ix::TracerOffset + 5*tracer_dims.water_tracers();
-            xWell[output_index] = 0;
-            xWell[output_index + 1] = 0;
+            xWell[output_index++] = 0;
+            xWell[output_index++] = 0;
         }
 
         template <class XWellArray>
@@ -1404,6 +1432,7 @@ namespace {
                             const Opm::TracerConfig&   tracers,
                             const Opm::Tracers&        tracer_dims,
                             const ::Opm::SummaryState& smry,
+                            const bool                 isTemp,
                             XWellArray&                xWell)
         {
             if (well.isProducer()) {
@@ -1433,7 +1462,7 @@ namespace {
                 }
             }
             assignCumulatives(well.name(), smry, xWell);
-            assignTracerData(tracers, tracer_dims, smry, well, xWell);
+            assignTracerData(tracers, tracer_dims, smry, well, xWell, isTemp);
         }
     } // XWell
 
@@ -1598,6 +1627,6 @@ captureDynamicWellData(const Opm::Schedule&       sched,
     {
         auto xwell = this->xWell_[wellID];
 
-        XWell::dynamicContrib(well, tracers, sched.runspec().tracers(), smry, xwell);
+        XWell::dynamicContrib(well, tracers, sched.runspec().tracers(), smry, sched.runspec().temp(), xwell);
     });
 }

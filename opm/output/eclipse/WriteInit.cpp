@@ -285,7 +285,7 @@ namespace {
         const auto& hystPar = rspec.hysterPar();
 
         const auto lh = ::Opm::RestartIO::LogiHEAD{}
-            .variousParam(false, false, wsd.maxSegmentedWells(), hystPar.active())
+            .variousParam(false, false, wsd.maxSegmentedWells(), hystPar.active(), rspec.temp())
             .pvtModel(pvtFlags(rspec, es.getTableManager()))
             .saturationFunction(satfuncFlags(rspec))
             ;

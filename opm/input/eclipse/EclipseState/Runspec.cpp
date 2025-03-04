@@ -598,6 +598,12 @@ Tracers Tracers::serializationTestObject() {
 int Tracers::water_tracers() const {
     return this->m_water_tracers;
 }
+int Tracers::gas_tracers() const {
+    return this->m_gas_tracers;
+}
+int Tracers::oil_tracers() const {
+    return this->m_oil_tracers;
+}
 
 
 Tracers::Tracers(const Deck& deck) {

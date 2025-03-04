@@ -449,6 +449,8 @@ public:
 
     explicit Tracers(const Deck& );
     int water_tracers() const;
+    int gas_tracers() const;
+    int oil_tracers() const;
 
     template<class Serializer>
     void serializeOp(Serializer& serializer) {

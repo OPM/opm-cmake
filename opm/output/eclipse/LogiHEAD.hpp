@@ -81,10 +81,11 @@ namespace Opm { namespace RestartIO {
         LogiHEAD& operator=(LogiHEAD&& rhs) = default;
 
         LogiHEAD& variousParam(const bool e300_radial,
-                               const bool e100_radial,
-                               const int  nswlmx,
-			       const bool enableHyster
-			      );
+                                const bool e100_radial,
+                                const int  nswlmx,
+			                    const bool enableHyster,
+                                const bool hasTemp = false
+			                );
 
         /// Assign PVT model characteristics.
         ///

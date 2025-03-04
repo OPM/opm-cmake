@@ -54,7 +54,7 @@ createLogiHead(const EclipseState& es)
           tabMgr.getPvcdoTable().empty());
 	
     const auto lh = LogiHEAD{}
-        .variousParam(false, false, wsd.maxSegmentedWells(), hystPar.active())
+        .variousParam(false, false, wsd.maxSegmentedWells(), hystPar.active(), rspec.temp())
         .pvtModel(pvt)
         .network(rspec.networkDimensions().maxNONodes())
         ;

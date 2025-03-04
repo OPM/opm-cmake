@@ -181,14 +181,21 @@ Opm::RestartIO::RstWell::RstWell(const UnitSystem&  unit_system,
     water_void_rate(     unit_system.to_si(M::liquid_surface_volume, xwel[VI::XWell::WatVoidPrRate])),
     gas_void_rate(       unit_system.to_si(M::gas_surface_volume,    xwel[VI::XWell::GasVoidPrRate]))
 {
-    // For E100 it appears that +1 instead of -1 is written for group_controllable_flag when the 
-    // group control is aactive, so using this to correct active_control (where ind.ctrl. is written)
+    // For E100 it appears that +1 instead of -1 is written for group_controllable_flag when the
+    // group control is active, so using this to correct active_control (where ind.ctrl. is written)
     if (group_controllable_flag > 0) {
         active_control = VI::IWell::Value::WellCtrlMode::Group;
     }
 
-    for (std::size_t tracer_index = 0;
-         tracer_index < static_cast<std::size_t>(header.runspec.tracers().water_tracers());
+    // If the TEMP option is active, this is the first tracer
+    std::size_t tracer_index = 0;
+    const bool isTemp = header.runspec.temp();
+    if (isTemp) {
+        this->inj_temperature = unit_system.to_si(M::temperature, swel[VI::SWell::TracerOffset + tracer_index++]);
+    }
+    const auto& tracers = header.runspec.tracers();
+    for (const auto num_tracer_injconcs = tracers.water_tracers() + 2*(tracers.gas_tracers() + tracers.oil_tracers()) + tracer_index;
+         tracer_index < static_cast<std::size_t>(num_tracer_injconcs);
          ++tracer_index)
     {
         this->tracer_concentration_injection.push_back(swel[VI::SWell::TracerOffset + tracer_index]);

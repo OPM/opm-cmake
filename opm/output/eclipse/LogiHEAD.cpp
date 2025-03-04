@@ -71,7 +71,7 @@ lh_028	=	28	,		//	FALSE
 lh_029	=	29	,		//	FALSE
 lh_030	=	30	,		//	FALSE		Flag for coalbed methane (ECLIPSE 100)
 lh_031	=	31	,		//	TRUE
-lh_032	=	32	,		//	FALSE
+lh_032	=	32	,		//	FALSE       Flag for TEMP option (ECLIPSE 100)
 lh_033	=	33	,		//	FALSE
 lh_034	=	34	,		//	FALSE
 lh_035	=	35	,		//	FALSE
@@ -82,7 +82,7 @@ lh_036	=	36	,		//	FALSE
     // Flag to signify constant oil compressibility
     ConstCo = VI::logihead::ConstCo,
 
-lh_039	=	39	,		//	FALSE
+lh_039	=	39	,		//	FALSE       Flag for TEMP option (ECLIPSE 100)
 lh_040	=	40	,		//	FALSE
 lh_041	=	41	,		//	FALSE
 lh_042	=	42	,		//	FALSE
@@ -187,13 +187,16 @@ Opm::RestartIO::LogiHEAD::
 variousParam(const bool e300_radial,
              const bool e100_radial,
              const int  nswlmx,
-             const bool enableHyster)
+             const bool enableHyster,
+             const bool hasTemp)
 {
     this -> data_[E300Radial] = e300_radial;
     this -> data_[E100Radial] = e100_radial;
     this -> data_[Hyster]     = enableHyster;
     this -> data_[HasMSWells] = nswlmx >= 1; // True if MS Wells exist.
 
+    this -> data_[32] = hasTemp;
+    this -> data_[39] = hasTemp;
     return *this;
 }
 
