@@ -224,7 +224,7 @@ namespace Opm {
         std::vector<std::string> wellNames(const std::string& pattern) const;
         std::vector<std::string> wellNames(std::size_t timeStep) const;
         std::vector<std::string> wellNames() const;
-
+        //const ScheduleGrid& get_schedulegrid() const{ return this->grid; };
         /// Query for group existence at particular time
         ///
         /// \param[in] groupName Fully specified group name.
@@ -413,6 +413,7 @@ namespace Opm {
             serializer(this->snapshots);
             serializer(this->restart_output);
             serializer(this->completed_cells);
+            serializer(this->completed_cells_lgr);
             serializer(this->m_treat_critical_as_non_critical);
             serializer(this->current_report_step);
             serializer(this->m_lowActionParsingStrictness);
@@ -466,6 +467,7 @@ namespace Opm {
         std::vector<ScheduleState> snapshots{};
         WriteRestartFileEvents restart_output{};
         CompletedCells completed_cells{};
+        std::vector<CompletedCells> completed_cells_lgr{};
 
         // Boolean indicating the strictness of parsing process for ActionX and PyAction.
         // If lowActionParsingStrictness is true, the simulator tries to apply unsupported
@@ -488,6 +490,7 @@ namespace Opm {
         // The copy constructor is needed for creating a mocked simulator (msim).
         std::shared_ptr<SimulatorUpdate> simUpdateFromPython{};
 
+        void init_completed_cells_lgr(const EclipseGrid& ecl_grid);
         void load_rst(const RestartIO::RstState& rst,
                       const TracerConfig& tracer_config,
                       const ScheduleGrid& grid,

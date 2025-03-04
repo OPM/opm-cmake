@@ -85,12 +85,25 @@ namespace Opm {
                            const Connection::CTFKind ctf_kind = Connection::CTFKind::DeckValue,
                            const std::size_t seqIndex = 0,
                            const bool defaultSatTabId = true);
+        
+        void loadCOMPDATX(const DeckRecord&      record,
+                         const ScheduleGrid&    grid,
+                         const std::string&     wname,
+                         const WDFAC&           wdfac,
+                         const KeywordLocation& location,
+                         std::optional<std::string> lgr_label);
 
         void loadCOMPDAT(const DeckRecord&      record,
                          const ScheduleGrid&    grid,
                          const std::string&     wname,
                          const WDFAC&           wdfac,
                          const KeywordLocation& location);
+
+        void loadCOMPDATL(const DeckRecord&      record,
+                          const ScheduleGrid&    grid,
+                          const std::string&     wname,
+                          const WDFAC&           wdfac,
+                          const KeywordLocation& location);                         
 
         void loadCOMPTRAJ(const DeckRecord&      record,
                           const ScheduleGrid&    grid,

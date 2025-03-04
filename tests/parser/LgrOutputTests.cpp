@@ -537,7 +537,7 @@ SCHEDULE
     // Intialize host_cell numbering.
     eclipse_grid.init_children_host_cells();
     std::vector<int> host_vec_sol = { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3};
-    std::vector<int> host_vec = eclipse_grid.getLGRCell(0).get_hostnum();
+    std::vector<int> host_vec = eclipse_grid.getLGRCell(0).save_hostnum();
     BOOST_CHECK_EQUAL_COLLECTIONS(host_vec.begin(), host_vec.end(), host_vec_sol.begin(), host_vec_sol.end());  
  
   }

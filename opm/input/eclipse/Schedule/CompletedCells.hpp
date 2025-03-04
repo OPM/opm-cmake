@@ -27,8 +27,12 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <string>
 
 namespace Opm {
+
+class EclipseGrid;
 
 class CompletedCells
 {
@@ -37,7 +41,6 @@ public:
     {
         std::size_t global_index{};
         std::size_t i{}, j{}, k{};
-
         struct Props
         {
             std::size_t active_index{};
@@ -102,7 +105,26 @@ public:
 
     CompletedCells() = default;
     ~CompletedCells() = default;
+    /**
+    * @brief Constructs a CompletedCells object for the base case without LGR.
+    *
+    * This constructor initializes the completed cells container based on 
+    * the provided grid dimensions. It does not account for Local Grid Refinement (LGR). 
+    *
+    * @param dims_ The grid dimensions used for indexing the cells.
+    */
     explicit CompletedCells(const GridDims& dims);
+    /**
+     * @brief Retrieves a completed cell at the specified grid coordinates.
+     *
+     * Uses the global indexing system provided by GridDims to access the 
+     * corresponding cell in the container.
+     *
+     * @param i The x-index of the cell.
+     * @param j The y-index of the cell.
+     * @param k The z-index of the cell.
+     * @return A constant reference to the requested cell.
+     */
     CompletedCells(std::size_t nx, std::size_t ny, std::size_t nz);
 
     const Cell& get(std::size_t i, std::size_t j, std::size_t k) const;

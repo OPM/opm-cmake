@@ -17,6 +17,7 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "opm/input/eclipse/Parser/ParserKeywords/C.hpp"
 #include <opm/input/eclipse/Schedule/Well/WellConnections.hpp>
 
 #include <opm/io/eclipse/rst/connection.hpp>
@@ -25,6 +26,7 @@
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/utility/ActiveGridCells.hpp>
 #include <opm/common/utility/numeric/linearInterpolation.hpp>
+#include <opm/input/eclipse/Parser/ParserKeywords/W.hpp>
 
 #include <opm/input/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
@@ -51,6 +53,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -352,11 +355,12 @@ namespace Opm {
                             seqIndex, defaultSatTabId);
     }
 
-    void WellConnections::loadCOMPDAT(const DeckRecord&      record,
-                                      const ScheduleGrid&    grid,
-                                      const std::string&     wname,
-                                      const WDFAC&           wdfac,
-                                      const KeywordLocation& location)
+    void WellConnections::loadCOMPDATX(const DeckRecord&      record,
+                                       const ScheduleGrid&    grid,
+                                       const std::string&     wname,
+                                       const WDFAC&           wdfac,
+                                       const KeywordLocation& location,
+                                       std::optional<std::string> lgr_label = std::nullopt)
     {
         const auto& itemI = record.getItem("I");
         const auto defaulted_I = itemI.defaultApplied(0) || (itemI.get<int>(0) == 0);
@@ -403,9 +407,9 @@ namespace Opm {
         const auto angle = 6.2831853071795864769252867665590057683943387987502116419498;
 
         for (int k = K1; k <= K2; ++k) {
-            const auto& cell = grid.get_cell(I, J, k);
+            const auto& cell = grid.get_cell(I, J, k, lgr_label);
             if (!cell.is_active()) {
-                auto msg = fmt::format(R"(Problem with COMPDAT keyword
+                auto msg = fmt::format(R"(Problem with COMPDATX keyword
 In {} line {}
 The cell ({},{},{}) in well {} is not active and the connection will be ignored)",
                                        location.filename, location.lineno,
@@ -542,6 +546,28 @@ The cell ({},{},{}) in well {} is not active and the connection will be ignored)
                 prev->updateSegment(conSegNo, cell.depth, css_ind, perf_range);
             }
         }
+    }
+
+
+    void WellConnections::loadCOMPDAT(const DeckRecord&     record,
+                                      const ScheduleGrid&    grid,
+                                      const std::string&     wname,
+                                      const WDFAC&           wdfac,
+                                      const KeywordLocation& location)
+    {
+        loadCOMPDATX(record,grid,wname,wdfac,location);
+        //loadCOMPDATX(record, grid, wname, wdfac, location);
+    }
+
+
+    void WellConnections::loadCOMPDATL(const DeckRecord&      record,
+                                       const ScheduleGrid&    grid,
+                                       const std::string&     wname,
+                                       const WDFAC&           wdfac,
+                                       const KeywordLocation& location)
+    {
+        const std::string& lgr_tag = record.getItem("LGR").get<std::string>(0);
+        loadCOMPDATX(record,grid,wname,wdfac,location, lgr_tag);
     }
 
     void WellConnections::loadCOMPTRAJ(const DeckRecord&      record,

@@ -18,6 +18,7 @@
 */
 
 #include <opm/input/eclipse/Schedule/CompletedCells.hpp>
+#include <opm/input/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 
 bool Opm::CompletedCells::Cell::Props::operator==(const Props& other) const
 {
@@ -64,13 +65,13 @@ Opm::CompletedCells::Cell
 Opm::CompletedCells::Cell::serializationTestObject()
 {
     Cell cell { 0, 1, 1, 1 };
-
     cell.props = Props::serializationTestObject();
     cell.depth = 12345;
     cell.dimensions = {1.0,2.0,3.0};
 
     return cell;
 }
+
 
 Opm::CompletedCells::CompletedCells(std::size_t nx, std::size_t ny, std::size_t nz)
     : dims(nx, ny, nz)
@@ -90,7 +91,7 @@ std::pair<bool, Opm::CompletedCells::Cell&>
 Opm::CompletedCells::try_get(std::size_t i, std::size_t j, std::size_t k)
 {
     const auto g = this->dims.getGlobalIndex(i, j, k);
-
+    
     const auto& [pos, inserted] = this->cells.try_emplace(g, g, i, j, k);
 
     return { !inserted, pos->second };
@@ -100,6 +101,7 @@ bool Opm::CompletedCells::operator==(const Opm::CompletedCells& other) const
 {
     return (this->dims == other.dims)
         && (this->cells == other.cells)
+
         ;
 }
 

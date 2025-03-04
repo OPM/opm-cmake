@@ -614,6 +614,7 @@ if(ENABLE_ECL_INPUT)
     tests/parser/WellSolventTests.cpp
     tests/parser/WellTracerTests.cpp
     tests/parser/WellTests.cpp
+    tests/parser/WellTestsLGR.cpp
     tests/parser/WLIST.cpp
     tests/parser/WriteRestartFileEventsTests.cpp
     tests/parser/WTEST.cpp

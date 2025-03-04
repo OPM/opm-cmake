@@ -149,9 +149,11 @@ namespace Opm {
         this->restart_output.clearRemainingEvents(0);
         this->simUpdateFromPython = std::make_shared<SimulatorUpdate>();
 
-        //const ScheduleGridWrapper gridWrapper { grid } ;
-        ScheduleGrid grid(ecl_grid, fp, this->completed_cells);
+        init_completed_cells_lgr(ecl_grid);
 
+        //const ScheduleGridWrapper gridWrapper { grid } ;
+        ScheduleGrid grid(ecl_grid, fp, this->completed_cells, this->completed_cells_lgr);
+        
         if (!keepKeywords) {
             const auto& section = SCHEDULESection(deck);
             keepKeywords = section.has_keyword("ACTIONX") ||
@@ -362,6 +364,7 @@ namespace Opm {
         result.snapshots = { ScheduleState::serializationTestObject() };
         result.restart_output = WriteRestartFileEvents::serializationTestObject();
         result.completed_cells = CompletedCells::serializationTestObject();
+        result.completed_cells_lgr =  std::vector<CompletedCells>(3, CompletedCells::serializationTestObject());
         result.current_report_step = 0;
         result.m_lowActionParsingStrictness = false;
         result.simUpdateFromPython = std::make_shared<SimulatorUpdate>(SimulatorUpdate::serializationTestObject());
@@ -1642,7 +1645,7 @@ File {} line {}.)", pattern, location.keyword, location.filename, location.linen
 
         ParseContext parseContext;
         ErrorGuard errors;
-        ScheduleGrid grid(this->completed_cells);
+        ScheduleGrid grid(this->completed_cells, this->completed_cells_lgr);
         SimulatorUpdate sim_update;
         std::unordered_map<std::string, double> wpimult_global_factor;
         const auto matches = Action::Result{false}.matches();
@@ -1740,7 +1743,7 @@ File {} line {}.)", pattern, location.keyword, location.filename, location.linen
 
         ErrorGuard errors;
         SimulatorUpdate sim_update;
-        ScheduleGrid grid(this->completed_cells);
+        ScheduleGrid grid(this->completed_cells, this->completed_cells_lgr);
 
         OpmLog::debug("/----------------------------------------------------------------------");
         OpmLog::debug(fmt::format("{0}Action {1} triggered. Will add action "
@@ -1866,7 +1869,7 @@ File {} line {}.)", pattern, location.keyword, location.filename, location.linen
             }
 
             ErrorGuard errors{};
-            ScheduleGrid grid(this->completed_cells);
+            ScheduleGrid grid(this->completed_cells, this->completed_cells_lgr);
 
             const std::string prefix = "| "; /* logger prefix string */
 
@@ -2148,6 +2151,21 @@ namespace {
         }
     }
 }
+
+    void Schedule::init_completed_cells_lgr(const EclipseGrid& ecl_grid)
+    { 
+        if (ecl_grid.is_lgr())
+        {
+            std::size_t num_label = ecl_grid.get_all_lgr_labels().size();
+            completed_cells_lgr.reserve(num_label);
+            for (auto lgr_tag : ecl_grid.get_all_lgr_labels())
+            {
+                const auto lgr_grid = ecl_grid.getLGRCell(lgr_tag);    
+                completed_cells_lgr.emplace_back(lgr_grid.getNX(), lgr_grid.getNY(), lgr_grid.getNZ());
+            }
+        }
+    }
+
 
     void Schedule::load_rst(const RestartIO::RstState& rst_state,
                             const TracerConfig&        tracer_config,
