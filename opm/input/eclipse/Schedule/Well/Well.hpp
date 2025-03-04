@@ -164,6 +164,9 @@ public:
 
         double rsRvInj;
 
+        // injection stream compostion for compositional simulation
+        std::optional<std::vector<double>> gas_inj_composition{};
+
         bool operator==(const WellInjectionProperties& other) const;
         bool operator!=(const WellInjectionProperties& other) const;
 
@@ -230,6 +233,9 @@ public:
         void update_uda(const UDQConfig& udq_config, UDQActive& udq_active, UDAControl control, const UDAValue& value);
         void handleWTMULT(Well::WELTARGCMode cmode, double factor);
 
+        void setGasInjComposition(const std::vector<double>& composition);
+        const std::vector<double>& gasInjComposition() const;
+
         template<class Serializer>
         void serializeOp(Serializer& serializer)
         {
@@ -248,6 +254,7 @@ public:
             serializer(injectorType);
             serializer(controlMode);
             serializer(rsRvInj);
+            serializer(gas_inj_composition);
         }
     };
 
